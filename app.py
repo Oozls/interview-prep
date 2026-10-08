@@ -19,8 +19,8 @@ import sys
 
 FROZEN = getattr(sys, "frozen", False)
 BASE = Path(sys._MEIPASS) if FROZEN else Path(__file__).parent      # bundled code, templates, static
-# user data must live outside the exe so updates (which replace the exe) never touch it
-DATA = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "생기부면접대비" if FROZEN else BASE
+# data.db / uploads sit next to the exe (portable); updates overlay the app files but skip these
+DATA = Path(sys.executable).parent if FROZEN else BASE
 DATA.mkdir(parents=True, exist_ok=True)
 UPLOADS = DATA / "uploads"
 DB_PATH = DATA / "data.db"

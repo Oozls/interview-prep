@@ -5,7 +5,7 @@ import threading
 
 # pythonw has no console: give stdout/stderr somewhere to go, and keep a crash log
 if sys.stdout is None or sys.stderr is None:
-    _d = os.path.join(os.environ.get("LOCALAPPDATA", "."), "생기부면접대비") if getattr(sys, "frozen", False) else os.path.dirname(os.path.abspath(__file__))
+    _d = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.path.abspath(__file__))
     os.makedirs(_d, exist_ok=True)
     log = open(os.path.join(_d, "error.log"), "a", encoding="utf-8")
     sys.stdout = sys.stdout or log
