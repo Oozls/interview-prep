@@ -1,8 +1,8 @@
 # Builds release\interview-prep-v<version>.zip (folder app: exe + _internal). Run from the project folder.
 # data.db / uploads are NOT bundled: the app creates them next to the exe on first run.
-param([string]$Dist = "dist", [string]$Work = "build")
+param([string]$Dist = "dist", [string]$Work = "build", [string]$Python = ".\.venv\Scripts\python.exe")
 $ver = (Select-String -Path version.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
-& .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --onedir --windowed --name interview-prep `
+& $Python -m PyInstaller --noconfirm --onedir --windowed --name interview-prep `
   --distpath $Dist --workpath $Work `
   --add-data "templates;templates" --add-data "static;static" `
   --collect-all webview --hidden-import clr main.py 2>&1 | Out-Null

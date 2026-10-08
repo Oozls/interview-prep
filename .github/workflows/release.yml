@@ -1,0 +1,27 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: tag must match version.py
+        shell: pwsh
+        run: |
+          $ver = (Select-String -Path version.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
+          if ("v$ver" -ne "${{ github.ref_name }}") { throw "tag ${{ github.ref_name }} != version.py v$ver" }
+      - name: build zip
+        shell: pwsh
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          ./build.ps1 -Python python
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          generate_release_notes: true
