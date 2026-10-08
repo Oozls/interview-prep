@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>생기부 면접 대비</title>
+<style>
+  @font-face { font-family: "AppleSDGothicNeoL00"; src: local("AppleSDGothicNeoL00"), local("Apple SD Gothic Neo L"), local("AppleSDGothicNeoL"); }
+  :root {
+    --bg: #1e1e1e; --panel: #252526; --line: #3c3c3c; --fg: #d4d4d4; --dim: #8b8b8b;
+    --accent: #4fc1ff; --hl: #5a4a12; --hl2: #7a6416; --danger: #f14c4c;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }   /* the app scrolls inside its panes, never the page */
+  body { background: var(--bg); color: var(--fg); font: 14px/1.6 "AppleSDGothicNeoL00", "Apple SD Gothic Neo L", "Malgun Gothic", sans-serif; display: flex; flex-direction: column; }
+  button, input, select, textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; padding: 4px 8px; }
+  button { cursor: pointer; background: var(--panel); }
+  button:hover { border-color: var(--accent); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+  textarea { width: 100%; resize: vertical; }
+  a { color: var(--accent); }
+  header { display: flex; gap: 4px; align-items: center; border-bottom: 1px solid var(--line); padding: 0 12px; background: var(--panel); }
+  header b { margin-right: 16px; font-weight: normal; color: var(--dim); }
+  header .tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 12px; }
+  header .tab.on { border-bottom-color: var(--accent); }
+  main { flex: 1; min-height: 0; display: flex; }
+  .side { width: 320px; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .side .tools { padding: 8px; display: grid; gap: 6px; border-bottom: 1px solid var(--line); }
+  .row { display: flex; gap: 6px; } .row > * { flex: 1; min-width: 0; }
+  .list { overflow: auto; flex: 1; }
+  .item { padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .item:hover { background: var(--panel); }
+  .item.on { background: #094771; }
+  .meta { color: var(--dim); font-size: 12px; }
+  .hit { color: var(--dim); font-size: 12px; margin-top: 2px; word-break: break-all; }
+  #mat:not(.open) .detail, #mat.open .side { display: none; }
+  #mat:not(.open) .side { width: 100%; max-width: 900px; margin: 0 auto; border-right: 0; }
+  .notes.off { display: none; }
+  .detail { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+  .empty { margin: auto; color: var(--dim); }
+  .dhead { padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .dhead .title { flex: 1; min-width: 200px; font-size: 16px; }
+  .body { flex: 1; min-height: 0; display: flex; }
+  .viewer { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+  .viewer .bar { padding: 6px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+  #text ::selection, #text::selection { background: #264f78; color: #fff; }
+  #text { position: relative; cursor: text; user-select: text; flex: 1; overflow: auto; margin: 0; padding: 12px; white-space: pre-wrap; word-break: break-word; font: inherit; line-height: 1.8; }
+  #text .math { display: inline; }
+  #text .math.display { display: block; text-align: center; margin: .3em 0; overflow-x: auto; overflow-y: hidden; }
+  #text .katex { font-size: 1.05em; }
+  #text .katex-display { margin: 0; }
+  .pdfv { flex: 1; min-height: 0; overflow: auto; position: relative; background: #111; padding: 8px 0; }
+  .pdfpage { position: relative; margin: 0 auto 8px; background: #fff; }
+  .pdfpage canvas { display: block; }
+  .pdfpage .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; }
+  .pdfpage .textLayer mark { background: rgba(255, 213, 0, .38); color: transparent; cursor: pointer; }
+  .pdfpage .textLayer mark.flash { background: rgba(255, 140, 0, .6); outline: 1px solid var(--accent); }
+  /* pywebview injects user-select:none on everything; re-enable it where text must be selectable */
+  .pdfpage .textLayer, .pdfpage .textLayer *, .md, .md *, .note .b, .note .q { -webkit-user-select: text; user-select: text; }
+  .pdfpage .textLayer ::selection { background: rgba(80, 140, 255, .45); }
+  .pdfpage .pn { position: absolute; right: 6px; bottom: 3px; font-size: 10px; color: #888; pointer-events: none; }
+  #text mark { background: var(--hl); color: inherit; cursor: pointer; }
+  #text mark.flash { background: var(--hl2); outline: 1px solid var(--accent); }
+  .viewer iframe, .viewer img { flex: 1; min-height: 0; border: 0; width: 100%; object-fit: contain; background: #111; }
+  .notes { width: 320px; border-left: 1px solid var(--line); overflow: auto; }
+  .ptabs { display: flex; padding: 0 !important; }
+  .ptabs .pt { flex: 1; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px; color: var(--dim); }
+  .ptabs .pt.on { border-bottom-color: var(--accent); color: var(--fg); }
+  .mq { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .mq .qt { white-space: pre-wrap; } .mq textarea { margin-top: 4px; }
+  .mq .act { display: flex; gap: 4px; justify-content: flex-end; align-items: center; } .mq .act button { padding: 0 6px; font-size: 12px; }
+  .mq .saved { flex: 1; color: var(--accent); }
+  .notes h4 { margin: 0; padding: 8px 12px; font-weight: normal; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .note { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .note .q { color: var(--dim); border-left: 2px solid var(--hl2); padding-left: 6px; margin-bottom: 4px; cursor: pointer; font-size: 12px; white-space: pre-wrap; }
+  .note .b { white-space: pre-wrap; }
+  .note .act { display: flex; gap: 4px; margin-top: 4px; }
+  .note .act button { padding: 0 6px; font-size: 12px; }
+  .pg { color: var(--accent); cursor: pointer; font-size: 12px; }
+  /* universities */
+  .uni-wrap { flex: 1; overflow: auto; padding: 12px; }
+  .uni { border: 1px solid var(--line); background: var(--panel); margin-bottom: 10px; padding: 10px 12px; }
+  .uni h3 { margin: 0 0 4px; font-weight: normal; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+  .uni .f { margin-top: 6px; } .uni .f span { color: var(--dim); font-size: 12px; display: block; }
+  .uni .f div { white-space: pre-wrap; }
+  .ans { margin-top: 8px; } .ans > span { color: var(--dim); font-size: 12px; }
+  .ans .saved { float: right; color: var(--accent); opacity: 0; transition: opacity .3s; } .ans .saved.on { opacity: 1; }
+  .rec-gh { position: sticky; top: 0; z-index: 1; background: var(--bg); color: var(--accent); font-size: 12px; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  .rec-item { padding: 6px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .rec-item:hover { background: var(--panel); } .rec-item.on { background: #094771; }
+  .rec-item .t { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .rec-item .t span { color: var(--dim); font-size: 11px; white-space: nowrap; }
+  .rec-item .pv { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-item.on .pv, .rec-item.on .t span { color: #b8d4e8; }
+  .reader { flex: 1; overflow: auto; padding: 20px 28px 40px; }
+  .reader .doc { max-width: 720px; margin: 0 auto; font-size: 13px; line-height: 1.95; }
+  .reader .doc p { margin: 0 0 .85em; }
+  .reader .chips a { display: inline-block; border: 1px solid var(--line); padding: 0 8px; margin: 0 6px 4px 0; font-size: 12px; text-decoration: none; }
+  .reader .chips a:hover { border-color: var(--accent); }
+  .suggest { position: fixed; z-index: 10; background: var(--panel); border: 1px solid var(--accent); border-top: 0;
+    max-height: 200px; overflow: auto; font: inherit; }
+  .suggest div { padding: 4px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .suggest div.on { background: #094771; }
+  .badge { font-size: 12px; border: 1px solid var(--line); padding: 0 6px; color: var(--dim); }
+  .dday { color: var(--accent); }
+  /* material screen polish */
+  #mat .side .tools { padding: 8px 10px; gap: 6px; }
+  #mat .side .tools input, #mat .side .tools select, #mat .side .tools button { font-size: 13px; padding: 3px 8px; }
+  .item { padding: 6px 10px; }
+  .item .t { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+  .item .t b { font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .t span { color: var(--dim); font-size: 11px; white-space: nowrap; }
+  .item .s { color: var(--dim); font-size: 12px; }
+  .item.on .s, .item.on .t span, .item.on .hit { color: #b8d4e8; }
+  .item .hit { margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dhead.mh { flex-wrap: nowrap; padding: 6px 12px; gap: 10px; }
+  .dhead.mh .ttl { flex: 1; min-width: 0; line-height: 1.4; }
+  .dhead.mh .title { min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dhead.mh .acts { display: flex; gap: 4px; flex: none; }
+  .dhead.mh button { font-size: 12px; padding: 2px 9px; }
+  .viewer .bar { padding: 4px 12px; font-size: 12px; gap: 6px; }
+  .viewer .bar button, .viewer .bar input { font-size: 12px; padding: 1px 8px; }
+  #text { padding: 14px 18px; font-size: 13px; line-height: 1.85; }
+  .notes { width: 300px; font-size: 13px; }
+  .ptabs .pt { padding: 6px; font-size: 13px; }
+  .note { padding: 8px 12px; }
+  .note .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .note .foot .meta { font-size: 11px; }
+  .note .act { margin-top: 0; opacity: 0; transition: opacity .15s; }
+  .note:hover .act { opacity: 1; }
+  .note .act button { border-color: transparent; background: none; color: var(--dim); }
+  .note .act button:hover { color: var(--fg); border-color: var(--line); }
+  .note .act button.danger:hover { color: var(--danger); border-color: var(--danger); }
+  /* universities & tips */
+  .doc .f { margin: 0 0 14px; } .doc .f span { color: var(--dim); font-size: 12px; display: block; } .doc .f div { white-space: pre-wrap; }
+  .doc h4 { margin: 22px 0 8px; padding-bottom: 4px; font-weight: normal; color: var(--accent); font-size: 13px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .doc h4 button { font-size: 12px; padding: 1px 8px; }
+  .qb { margin: 0 0 14px; }
+  .qb .qh { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+  .qb .qt { white-space: pre-wrap; }
+  .qb .qa { display: flex; gap: 4px; flex: none; opacity: 0; transition: opacity .15s; } .qb:hover .qa { opacity: 1; }
+  .qb .qa button { font-size: 12px; padding: 0 6px; border-color: transparent; background: none; color: var(--dim); }
+  .qb .qa button:hover { color: var(--fg); border-color: var(--line); } .qb .qa button.danger:hover { color: var(--danger); border-color: var(--danger); }
+  .qb .ans { margin-top: 4px; }
+  .dhead input.title { background: none; border: 0; padding: 0; font-size: 16px; outline: none; }
+  .tipbody { flex: 1; min-height: 0; margin: 0; border: 0; border-radius: 0; resize: none; padding: 16px 24px; line-height: 1.85; font-size: 13px; outline: none !important; }
+  .tipmode { display: flex; gap: 0; } .tipmode button { border-radius: 0; font-size: 12px; padding: 1px 10px; } .tipmode button + button { border-left: 0; }
+  .tipmode button.on { border-color: var(--accent); color: var(--accent); }
+  .md { flex: 1; min-height: 0; overflow: auto; padding: 16px 24px 40px; font-size: 13px; line-height: 1.85; }
+  .md > * { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .md h1, .md h2, .md h3, .md h4 { font-weight: normal; line-height: 1.4; margin: 1.4em auto .5em; }
+  .md h1 { font-size: 20px; padding-bottom: 4px; border-bottom: 1px solid var(--line); } .md h2 { font-size: 16px; color: var(--accent); } .md h3 { font-size: 14px; } .md h4 { font-size: 13px; color: var(--dim); }
+  .md > :first-child { margin-top: 0; }
+  .md p, .md ul, .md ol, .md blockquote, .md pre, .md table { margin-top: 0; margin-bottom: .8em; }
+  .md ul, .md ol { padding-left: 1.4em; } .md li { margin: .1em 0; }
+  .md blockquote { border-left: 2px solid var(--hl2); padding: 0 12px; color: var(--dim); }
+  .md code { background: var(--panel); border: 1px solid var(--line); padding: 0 4px; font-size: 12px; }
+  .md pre { background: var(--panel); border: 1px solid var(--line); padding: 8px 12px; overflow: auto; } .md pre code { border: 0; padding: 0; background: none; }
+  .md table { border-collapse: collapse; } .md th, .md td { border: 1px solid var(--line); padding: 3px 10px; } .md th { background: var(--panel); font-weight: normal; }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 1.2em auto; }
+  .md input[type=checkbox] { width: auto; margin-right: 6px; }
+  /* modal */
+  dialog { background: var(--panel); color: var(--fg); border: 1px solid var(--line); padding: 16px; width: min(560px, 92vw); }
+  dialog.msg { width: min(380px, 92vw); } #msgText { white-space: pre-line; line-height: 1.7; word-break: keep-all; }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog label { display: block; margin-top: 8px; color: var(--dim); font-size: 12px; }
+  dialog input, dialog select { width: 100%; }
+  dialog .btns { margin-top: 12px; display: flex; gap: 6px; justify-content: flex-end; }
+  .seg { display: flex; gap: 4px; margin-bottom: 4px; } .seg button.on { border-color: var(--accent); color: var(--accent); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; } ::-webkit-scrollbar-thumb { background: #424242; } ::-webkit-scrollbar-track { background: transparent; }
+</style>
+<link rel="stylesheet" href="/static/katex/katex.min.css">
+<link rel="stylesheet" href="/static/pdfjs/pdf_viewer.min.css">
+<script src="/static/katex/katex.min.js"></script>
+<script src="/static/marked.min.js"></script>
+<script src="/static/pdfjs/pdf.min.js"></script>
+</head>
+<body>
+<header>
+  <b>생기부 면접 대비</b>
+  <button class="tab on" data-tab="mat">자료</button>
+  <button class="tab" data-tab="uni">지원 대학</button>
+  <button class="tab" data-tab="rec">생기부</button>
+  <button class="tab" data-tab="tip">면접 노트</button>
+  <button id="updBadge" hidden style="margin-left:auto;border-color:var(--accent);color:var(--accent)"></button>
+  <button id="openSet" style="margin-left:6px">설정</button>
+</header>
+
+<main id="mat">
+  <div class="side">
+    <div class="tools">
+      <input id="q" placeholder="키워드 검색 (제목·본문·노트, 공백=AND)">
+      <div class="row">
+        <select id="fGrade"><option value="">학년 전체</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select>
+        <select id="fSubject"><option value="">과목 전체</option></select>
+        <button id="addMat" style="flex:none">+ 등록</button>
+      </div>
+    </div>
+    <div class="list" id="matList"></div>
+  </div>
+  <div class="detail" id="matDetail"><div class="empty">자료를 선택하거나 등록하세요.</div></div>
+</main>
+
+<main id="uni" hidden>
+  <div class="side">
+    <div class="tools"><button id="addUni">+ 대학 등록</button></div>
+    <div class="list" id="uniList"></div>
+  </div>
+  <div class="detail" id="uniDetail"></div>
+</main>
+
+<main id="tip" hidden>
+  <div class="side">
+    <div class="tools"><button id="addTip">+ 새 노트</button></div>
+    <div class="list" id="tipList"></div>
+  </div>
+  <div class="detail" id="tipDetail"></div>
+</main>
+
+<main id="rec" hidden>
+  <div class="side">
+    <div class="tools">
+      <input id="rq" placeholder="과목·내용 검색">
+      <div class="row">
+        <select id="rGrade"><option value="">학년 전체</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select>
+        <button id="addRec">+ 등록</button>
+        <button id="expRec" style="flex:none" title="생기부 전체를 PDF로 저장">PDF</button>
+      </div>
+    </div>
+    <div class="list" id="recList"></div>
+  </div>
+  <div class="detail" id="recDetail"></div>
+</main>
+
+<dialog id="dlgSet">
+  <form method="dialog" id="fSet">
+    <div class="meta">스캔된 PDF(글자가 없는 페이지)만 OpenRouter 비전 모델로 OCR합니다. 글자가 있는 PDF는 항상 무료로 로컬에서 추출합니다.</div>
+    <label>OpenRouter API 키<input name="api_key" type="password" autocomplete="off"></label>
+    <div class="meta" id="keyState"></div>
+    <label>OCR 모델 (이미지를 읽을 수 있는 모델)<input name="model"></label>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+      <span class="meta">가격은 100만 토큰당 USD, 예상 쪽당 비용은 스캔 1쪽 기준 추정치</span><button type="button" id="loadModels">모델 목록</button></div>
+    <div id="modelBox" hidden style="margin-top:6px">
+      <div style="display:flex;gap:8px;align-items:center"><input id="modelQ" placeholder="모델 검색 (이름·ID)"><label style="margin:0;white-space:nowrap;display:flex;gap:4px;align-items:center"><input type="checkbox" id="freeOnly" style="width:auto"> 무료만</label></div>
+      <div id="modelList" style="max-height:220px;overflow:auto;margin-top:6px;border:1px solid var(--line)"></div>
+    </div>
+    <div id="usage" style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span class="meta">OpenRouter 사용량</span><button type="button" id="refUsage">새로고침</button></div>
+      <div id="usageBody" class="meta" style="margin-top:6px"></div>
+    </div>
+    <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px;display:flex;align-items:center;justify-content:space-between">
+      <span class="meta" id="verInfo">버전</span><button type="button" id="chkUpd">업데이트 확인</button></div>
+    <div class="btns"><button type="button" id="clearKey" class="danger">키 삭제</button><span style="flex:1"></span><button type="button" class="cancel">닫기</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgRec">
+  <form method="dialog" id="fRec">
+    <div class="row">
+      <label>학년<select name="grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select></label>
+      <label>과목 / 항목<input name="subject" required placeholder="예: 생명과학, 창의적 체험활동"></label>
+    </div>
+    <datalist id="recSubj"></datalist>
+    <label>생기부 내용<textarea name="content" rows="14"></textarea></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgQ">
+  <form method="dialog" id="fQ">
+    <label>공통 질문<textarea name="text" rows="3" required></textarea></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgConv">
+  <form method="dialog" id="fConv">
+    <div id="convTitle" style="font-size:15px"></div>
+    <div id="convToFile">
+      <div class="meta" style="margin-top:6px">본문 텍스트는 검색용으로 그대로 남고, 노트는 모두 유지됩니다. 노트는 인용한 문장이 들어 있는 쪽으로 옮겨지며(PDF), 찾지 못한 노트는 1쪽에 둡니다.</div>
+      <label>변환할 파일<input type="file" id="convFile"></label>
+    </div>
+    <div id="convToText" hidden>
+      <div class="meta" style="margin-top:6px">글자가 있는 PDF는 무료로 추출하고, 스캔·깨진 쪽만 OCR합니다. 쪽별 노트는 그 쪽 첫 줄에 붙고 &quot;[원본 N쪽]&quot;이 앞에 붙습니다. 원본 파일은 지워지지 않고 <b>uploads/_converted</b>로 옮겨집니다.</div>
+      <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="convForce" style="width:auto"> 모든 페이지를 OCR (수식이 많을 때)</label>
+      <button type="button" id="convExtract">텍스트 추출</button>
+      <div class="meta" id="convStatus" style="margin-top:6px"></div>
+      <textarea id="convPreview" rows="10" readonly hidden style="margin-top:6px"></textarea>
+    </div>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit" id="convGo">변환</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgMQ">
+  <form method="dialog" id="fMQ">
+    <div class="meta">모든 자료에 공통으로 붙는 질문입니다.</div>
+    <label>질문<textarea name="text" rows="3" required></textarea></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgMat">
+  <form method="dialog" id="fMat">
+    <div class="seg"><button type="button" data-k="text" class="on">텍스트 입력</button><button type="button" data-k="file">파일 업로드</button></div>
+    <label>제목<input name="title"></label>
+    <div class="row">
+      <label>학년<select name="grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select></label>
+      <label>과목<input name="subject" placeholder="예: 생명과학"></label>
+    </div>
+    <datalist id="subjList"></datalist>
+    <div id="pdfRow" style="margin-top:8px"><span class="meta">PDF에서 텍스트 가져오기 (선택)</span>
+      <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="forceOcr" style="width:auto"> 모든 페이지를 OCR (수식·LaTeX PDF, 추출 글자가 깨질 때)</label>
+      <input type="file" id="pdfIn" accept="application/pdf,.pdf"><div class="meta" id="pdfStatus"></div></div>
+    <label id="lText">본문<textarea name="content" rows="10"></textarea></label>
+    <label id="lFile" hidden>파일 (PDF·이미지·문서 등)<input type="file" name="file"></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">등록</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgEditMat">
+  <form method="dialog" id="fEditMat">
+    <label>제목<input name="title"></label>
+    <div class="row">
+      <label>학년<select name="grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select></label>
+      <label>과목<input name="subject"></label>
+    </div>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgMsg" class="msg">
+  <div id="msgText"></div>
+  <div class="btns"><button type="button" id="msgNo">취소</button><button type="button" id="msgOk">확인</button></div>
+</dialog>
+<dialog id="dlgUpd" class="msg"><div id="updText"></div></dialog>
+<dialog id="dlgNote">
+  <form method="dialog" id="fNote">
+    <div class="meta" id="noteCtx"></div>
+    <label>노트<textarea name="body" rows="6" required></textarea></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgUni">
+  <form method="dialog" id="fUni">
+    <div class="row">
+      <label>대학<input name="name" required></label>
+      <label>학과<input name="department"></label>
+    </div>
+    <div class="row">
+      <label>면접 날짜<input type="date" name="interview_date"></label>
+      <label>상태<select name="status"><option>준비중</option><option>지원 예정</option><option>지원 완료</option><option>면접 완료</option><option>합격</option><option>불합격</option></select></label>
+    </div>
+    <label>학교/학과 특성<textarea name="traits" rows="3"></textarea></label>
+    <label>장점<textarea name="strengths" rows="3"></textarea></label>
+    <label>메모<textarea name="memo" rows="3"></textarea></label>
+    <div class="btns"><button type="button" class="cancel">취소</button><button type="submit">저장</button></div>
+  </form>
+</dialog>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// in-page replacements for the browser's alert()/confirm()
+function msgBox(text, { ask = false, danger = false, ok = "확인" } = {}) {
+  return new Promise(resolve => {
+    const d = $("#dlgMsg"), yes = $("#msgOk"), no = $("#msgNo");
+    $("#msgText").textContent = text;
+    yes.textContent = ok; yes.classList.toggle("danger", danger); no.hidden = !ask;
+    const done = v => { d.close(); resolve(v); };
+    yes.onclick = () => done(true); no.onclick = () => done(false);
+    d.onclose = () => resolve(false);          // Esc
+    d.showModal(); (ask && danger ? no : yes).focus();
+  });
+}
+const notify = text => msgBox(text);
+const askConfirm = text => msgBox(text, { ask: true, danger: /삭제/.test(text), ok: /삭제/.test(text) ? "삭제" : "확인" });
+const api = async (url, method = "GET", body) => {
+  const opt = { method };
+  if (body instanceof FormData) opt.body = body;
+  else if (body) { opt.headers = { "Content-Type": "application/json" }; opt.body = JSON.stringify(body); }
+  const r = await fetch(url, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { notify(j.error || "오류가 발생했습니다."); throw new Error(j.error); }
+  return j;
+};
+const gradeLabel = g => g ? g + "학년" : "기타";
+document.querySelectorAll("dialog .cancel").forEach(b => b.onclick = () => b.closest("dialog").close());
+
+// ---- custom autocomplete (native <datalist> popup can't be themed) ----
+function attachSuggest(input, getOptions) {
+  input.autocomplete = "off";
+  let box = null, idx = -1, items = [];
+  const close = () => { box?.remove(); box = null; idx = -1; };
+  const paint = () => [...box.children].forEach((el, i) => el.classList.toggle("on", i === idx));
+  const pick = v => { input.value = v; close(); input.dispatchEvent(new Event("input", { bubbles: true })); };
+  const open = () => {
+    const q = input.value.trim().toLowerCase();
+    items = [...new Set(getOptions())].filter(o => o.toLowerCase().includes(q) && o !== input.value);
+    if (!items.length) return close();
+    if (!box) {
+      box = document.createElement("div"); box.className = "suggest";
+      (input.closest("dialog") || document.body).append(box);
+    }
+    const r = input.getBoundingClientRect();
+    Object.assign(box.style, { left: r.left + "px", top: r.bottom - 1 + "px", width: r.width + "px" });
+    box.innerHTML = ""; idx = -1;
+    items.forEach(o => {
+      const d = document.createElement("div"); d.textContent = o;
+      d.onmousedown = e => { e.preventDefault(); pick(o); };
+      box.append(d);
+    });
+  };
+  input.addEventListener("input", open);
+  input.addEventListener("focus", open);
+  input.addEventListener("blur", close);
+  input.addEventListener("keydown", e => {
+    if (!box) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); idx = (idx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; paint();
+    } else if (e.key === "Enter" && idx >= 0) { e.preventDefault(); pick(items[idx]); }
+    else if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); close(); }
+  });
+}
+let subjectOptions = [], recSubjectOptions = [];
+attachSuggest($("#fMat").elements.subject, () => subjectOptions);
+attachSuggest($("#fEditMat").elements.subject, () => subjectOptions);
+attachSuggest($("#fRec").elements.subject, () => recSubjectOptions);
+
+// ---- shared "free extract first, OCR only what's needed" flow ----
+async function extractFlow(send, force, st) {
+  st.textContent = "추출 중…";
+  let r = await send(false);
+  let msg = `${r.pages}쪽 중 ${r.pages - r.scanned.length}쪽을 무료로 추출했습니다.`;
+  const need = force ? r.pages : r.scanned.length, est = force ? r.est_all_usd : r.est_cost_usd;
+  if (need && r.pages) {
+    if (!r.has_key) msg += " 스캔·깨진 쪽은 상단 '설정'에 OpenRouter 키를 넣으면 OCR할 수 있습니다.";
+    else if (await askConfirm(`${force ? "모든 " + r.pages + "쪽" : "글자가 없거나 깨진 " + r.scanned.length + "쪽"}을 OpenRouter(${r.model})로 OCR할까요?\n예상 비용: 약 $${est} (같은 페이지는 캐시되어 재과금되지 않습니다)`)) {
+      st.textContent = "OCR 중…";
+      r = await send(true);
+      msg = `${r.pages}쪽 중 ${r.ocr_pages.length}쪽을 OCR했습니다. 실제 비용 약 $${r.cost_usd}.` + (r.warning ? " " + r.warning : "");
+    } else msg += " OCR은 건너뛰었습니다.";
+  }
+  if (r.formulas_unread) msg += ` 읽지 못한 수식 ${r.formulas_unread}곳은 [수식]으로 표시했습니다.`;
+  st.textContent = msg;
+  return r;
+}
+
+// ---- change format of an existing material (notes are kept) ----
+let convResult = null;
+$("#dlgConv").addEventListener("close", () => { convResult = null; });
+function openConv() {
+  const m = current, toFile = m.kind === "text";
+  $("#convTitle").textContent = toFile ? `「${m.title}」을(를) 파일 자료로 변환` : `「${m.title}」을(를) 텍스트 자료로 변환`;
+  $("#convToFile").hidden = !toFile; $("#convToText").hidden = toFile;
+  $("#convFile").value = ""; $("#convStatus").textContent = ""; $("#convPreview").hidden = true; $("#convPreview").value = "";
+  convResult = null; $("#convGo").disabled = !toFile ? true : false;
+  $("#dlgConv").showModal();
+}
+$("#convExtract").onclick = async () => {
+  $("#convGo").disabled = true; convResult = null;
+  const force = $("#convForce").checked;
+  const send = ocr => { const fd = new FormData(); if (ocr) fd.append("ocr", "1"); if (force) fd.append("force", "1"); return api(`/api/materials/${currentId}/extract`, "POST", fd); };
+  try {
+    convResult = await extractFlow(send, force, $("#convStatus"));
+    $("#convPreview").hidden = false; $("#convPreview").value = convResult.text;
+    $("#convGo").disabled = !convResult.text.trim();
+  } catch (e) { $("#convStatus").textContent = "실패: " + (e.message || ""); }
+};
+$("#fConv").onsubmit = async e => {
+  e.preventDefault();
+  const m = current;
+  try {
+    if (m.kind === "text") {
+      const f = $("#convFile").files[0];
+      if (!f) { notify("변환할 파일을 선택하세요."); return; }
+      const fd = new FormData(); fd.append("file", f);
+      const r = await api(`/api/materials/${m.id}/convert-to-file`, "POST", fd);
+      $("#dlgConv").close(); await openMat(m.id);
+      notify(`파일 자료로 변환했습니다.\n노트 ${r.placed}개는 해당 쪽으로 옮겼고` + (r.unmatched ? `, ${r.unmatched}개는 위치를 찾지 못해 1쪽에 두었습니다.` : ".") + (r.pdf ? "" : "\n(PDF가 아니라서 쪽 위치는 찾지 못했습니다.)"));
+    } else {
+      if (!convResult || !convResult.text.trim()) return;
+      if (!await askConfirm("텍스트 자료로 변환할까요?\n원본 파일은 uploads/_converted 폴더로 옮겨집니다.")) return;
+      const r = await api(`/api/materials/${m.id}/convert-to-text`, "POST", { content: convResult.text, page_starts: convResult.page_starts });
+      $("#dlgConv").close(); await openMat(m.id);
+      notify(`텍스트 자료로 변환했습니다.\n노트 ${r.placed}개는 해당 쪽 첫 줄에 붙였고` + (r.lost ? `, ${r.lost}개는 위치 없는 노트가 되었습니다.` : "."));
+    }
+  } catch (err) { /* api() already alerted */ }
+};
+
+// ---- settings ----
+async function loadSettings() {
+  const st = await api("/api/settings");
+  $("#fSet").elements.model.value = st.model;
+  $("#keyState").textContent = st.has_key ? "API 키가 저장되어 있습니다." : "API 키가 없습니다. 스캔 PDF는 OCR할 수 없습니다.";
+  return st;
+}
+$("#openSet").onclick = async () => { $("#fSet").elements.api_key.value = ""; await loadSettings(); $("#dlgSet").showModal(); loadUsage(); };
+$("#refUsage").onclick = loadUsage;
+let modelRows = null;
+const priceFmt = n => n === 0 ? "무료" : "$" + n;
+function renderModels() {
+  const q = $("#modelQ").value.trim().toLowerCase(), freeOnly = $("#freeOnly").checked, cur = $("#fSet").elements.model.value;
+  const rows = modelRows.filter(m => (!q || (m.id + " " + m.name).toLowerCase().includes(q)) && (!freeOnly || m.est_page === 0));
+  $("#modelList").innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="color:var(--dim);text-align:left;position:sticky;top:0;background:var(--panel)"><th style="padding:4px 8px">모델</th><th>입력</th><th>출력</th><th>예상/쪽</th></tr>` +
+    rows.slice(0, 150).map(m => `<tr data-id="${esc(m.id)}" style="cursor:pointer;${m.id === cur ? "background:#094771" : ""}">
+      <td style="padding:3px 8px">${esc(m.name)}<div class="meta" style="font-size:11px">${esc(m.id)}</div></td>
+      <td>${priceFmt(m.in)}</td><td>${priceFmt(m.out)}</td><td>${m.est_page === 0 ? "무료" : "$" + m.est_page}</td></tr>`).join("") + "</table>" +
+    (rows.length ? "" : '<div class="meta" style="padding:8px">일치하는 모델이 없습니다.</div>') +
+    (rows.length > 150 ? `<div class="meta" style="padding:6px 8px">${rows.length}개 중 150개만 표시합니다. 검색으로 좁혀 보세요.</div>` : "");
+  $("#modelList").querySelectorAll("tr[data-id]").forEach(tr => tr.onclick = () => { $("#fSet").elements.model.value = tr.dataset.id; renderModels(); });
+}
+$("#loadModels").onclick = async () => {
+  const box = $("#modelBox");
+  if (!box.hidden) { box.hidden = true; return; }
+  box.hidden = false; $("#modelList").innerHTML = '<div class="meta" style="padding:8px">불러오는 중…</div>';
+  try { modelRows ||= await api("/api/openrouter/models"); renderModels(); }
+  catch (e) { $("#modelList").innerHTML = '<div class="meta" style="padding:8px">목록을 불러오지 못했습니다.</div>'; }
+};
+$("#modelQ").oninput = $("#freeOnly").onchange = () => modelRows && renderModels();
+$("#modelQ").onkeydown = e => { if (e.key === "Enter") e.preventDefault(); };
+$("#fSet").elements.model.addEventListener("input", () => modelRows && !$("#modelBox").hidden && renderModels());
+const usd = n => n == null ? "-" : "$" + Number(n).toFixed(4);
+async function loadUsage() {
+  const box = $("#usageBody"); box.textContent = "불러오는 중…";
+  const u = await api("/api/openrouter/usage");
+  const rows = [];
+  if (u.credits) rows.push(`계정 잔액: <b>${usd(u.credits.total - u.credits.used)}</b> (충전 ${usd(u.credits.total)} − 사용 ${usd(u.credits.used)})`);
+  if (u.key) {
+    const k = u.key;
+    rows.push(k.limit_remaining != null ? `이 키의 남은 한도: <b>${usd(k.limit_remaining)}</b> / ${usd(k.limit)}` : "이 키의 한도: 제한 없음");
+    rows.push(`이 키 사용액: 오늘 ${usd(k.usage_daily)} · 이번 주 ${usd(k.usage_weekly)} · 이번 달 ${usd(k.usage_monthly)} · 누적 ${usd(k.usage)}`);
+    if (!u.credits) rows.push('계정 전체 잔액은 관리 키가 있어야 조회돼서 여기엔 없습니다. <a href="https://openrouter.ai/credits" target="_blank">openrouter.ai/credits</a>에서 확인하세요.');
+  } else if (!u.errors.length) rows.push("API 키를 저장하면 남은 크레딧과 사용액을 볼 수 있습니다.");
+  u.errors.forEach(e => rows.push(`<span style="color:var(--danger)">${esc(e)}</span>`));
+  rows.push(`이 앱의 OCR 기록: 유료 ${u.local.paid_pages}쪽 · 캐시 ${u.local.cached_pages}쪽 · 합계 ${usd(u.local.cost)}`);
+  const log = u.local.recent.map(r => `<tr><td>${esc(r.ts)}</td><td>${esc(r.filename)} p.${r.page}</td><td>${r.cached ? "캐시" : usd(r.cost)}</td><td>${r.prompt_tokens + r.completion_tokens || ""}</td></tr>`).join("");
+  box.innerHTML = rows.map(r => `<div>${r}</div>`).join("") + (log ? `<div style="max-height:160px;overflow:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="color:var(--dim);text-align:left"><th>시각</th><th>파일</th><th>비용</th><th>토큰</th></tr>${log}</table></div>` : "");
+}
+$("#fSet").onsubmit = async () => {
+  const f = $("#fSet").elements;
+  await api("/api/settings", "PUT", { api_key: f.api_key.value, model: f.model.value });
+};
+$("#clearKey").onclick = async () => {
+  if (!await askConfirm("저장된 API 키를 삭제할까요?")) return;
+  await api("/api/settings", "PUT", { clear_key: true, model: $("#fSet").elements.model.value }); loadSettings();
+};
+
+// ---- PDF -> text in the text-registration form ----
+$("#pdfIn").onchange = async () => {
+  const file = $("#pdfIn").files[0], st = $("#pdfStatus");
+  if (!file) return;
+  const force = $("#forceOcr").checked;
+  const send = async ocr => {
+    const fd = new FormData(); fd.append("file", file); if (ocr) fd.append("ocr", "1"); if (force) fd.append("force", "1");
+    return api("/api/extract-pdf", "POST", fd);
+  };
+  const fill = r => {
+    const f = $("#fMat").elements;
+    f.content.value = r.text;
+    if (!f.title.value.trim()) f.title.value = file.name.replace(/\.pdf$/i, "");
+  };
+  st.textContent = "추출 중…";
+  try {
+    let r = await send(false);
+    fill(r);
+    let msg = `${r.pages}쪽 중 ${r.pages - r.scanned.length}쪽을 무료로 추출했습니다.`;
+    const need = force ? r.pages : r.scanned.length, est = force ? r.est_all_usd : r.est_cost_usd;
+    if (need) {
+      if (!r.has_key) {
+        msg += force ? " 모든 페이지 OCR에는 상단 '설정'의 OpenRouter 키가 필요합니다."
+          : ` 글자가 없거나 깨진 페이지 ${r.scanned.length}쪽(${r.scanned.join(", ")})은 비어 있거나 깨져 있을 수 있습니다. 상단 '설정'에 OpenRouter 키를 넣으면 OCR할 수 있습니다.`;
+      } else if (await askConfirm(`${force ? "모든 " + r.pages + "쪽" : "글자가 없거나 깨진 " + r.scanned.length + "쪽"}을 OpenRouter(${r.model})로 OCR할까요?\n예상 비용: 약 $${est} (같은 페이지는 캐시되어 재과금되지 않습니다)`)) {
+        st.textContent = "OCR 중… (페이지 수에 따라 시간이 걸립니다)";
+        r = await send(true); fill(r);
+        msg = `${r.pages}쪽 중 ${r.ocr_pages.length}쪽을 OCR했습니다. 실제 비용 약 $${r.cost_usd}.` + (r.warning ? " " + r.warning : "");
+      } else msg += ` OCR은 건너뛰었습니다.`;
+    }
+    if (r.formulas_unread) msg += ` 읽지 못한 수식 ${r.formulas_unread}곳은 [수식]으로 표시했습니다.`;
+    st.textContent = msg;
+  } catch (e) { st.textContent = "실패: " + (e.message || ""); }
+  $("#pdfIn").value = "";
+};
+
+// ---- tabs ----
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  $("#mat").hidden = t.dataset.tab !== "mat";
+  $("#uni").hidden = t.dataset.tab !== "uni";
+  $("#tip").hidden = t.dataset.tab !== "tip";
+  $("#rec").hidden = t.dataset.tab !== "rec";
+  if (t.dataset.tab === "uni") loadUnis();
+  if (t.dataset.tab === "tip") loadTips();
+  if (t.dataset.tab === "rec") loadRecs();
+});
+
+// ---- materials ----
+let current = null, currentId = null, pendingSel = null, notesOff = false, panelTab = "notes";
+function closeMat() { current = currentId = null; $("#mat").classList.remove("open"); loadList(); }
+
+async function loadSubjects() {
+  const subs = await api("/api/subjects");
+  const keep = $("#fSubject").value;
+  $("#fSubject").innerHTML = '<option value="">과목 전체</option>' + subs.map(s => `<option>${esc(s)}</option>`).join("");
+  $("#fSubject").value = subs.includes(keep) ? keep : "";
+  subjectOptions = recSubjectOptions = await api("/api/record-subjects");
+  $("#subjList").innerHTML = subs.map(s => `<option value="${esc(s)}">`).join("");
+}
+
+async function loadList() {
+  const p = new URLSearchParams({ q: $("#q").value, grade: $("#fGrade").value, subject: $("#fSubject").value });
+  const rows = await api("/api/materials?" + p);
+  const byGrade = {};
+  [...rows].sort((a, b) => (a.subject || "힣").localeCompare(b.subject || "힣", "ko")).forEach(m => (byGrade[m.grade] ||= []).push(m));
+  $("#matList").innerHTML = [1, 2, 3, 0].filter(g => byGrade[g]).map(g =>
+    `<div class="rec-gh">${gradeLabel(g)} · ${byGrade[g].length}</div>` + byGrade[g].map(m => `
+    <div class="item ${m.id === currentId ? "on" : ""}" data-id="${m.id}">
+      <div class="t"><b>${esc(m.title)}</b>${m.note_count ? `<span>노트 ${m.note_count}</span>` : ""}</div>
+      <div class="s">${esc(m.subject || "과목 없음")} · ${m.kind === "file" ? "파일" : "텍스트"}</div>
+      ${m.hit ? `<div class="hit">${esc(m.hit)}</div>` : ""}
+    </div>`).join("")).join("") || '<div class="empty" style="padding:16px">결과 없음</div>';
+  document.querySelectorAll("#matList .item").forEach(el => el.onclick = () => openMat(+el.dataset.id));
+}
+let timer;
+$("#q").oninput = () => { clearTimeout(timer); timer = setTimeout(loadList, 200); };
+$("#fGrade").onchange = $("#fSubject").onchange = loadList;
+
+// register
+let addKind = "text";
+document.querySelectorAll("#dlgMat .seg button").forEach(b => b.onclick = () => {
+  addKind = b.dataset.k;
+  document.querySelectorAll("#dlgMat .seg button").forEach(x => x.classList.toggle("on", x === b));
+  $("#lText").hidden = addKind !== "text"; $("#lFile").hidden = addKind !== "file";
+});
+$("#addMat").onclick = () => { $("#fMat").reset(); $("#pdfStatus").textContent = ""; $("#dlgMat").showModal(); };
+$("#fMat").onsubmit = async e => {
+  const fd = new FormData($("#fMat"));
+  if (addKind === "text") fd.delete("file"); else fd.delete("content");
+  const r = await api("/api/materials", "POST", fd);
+  await loadSubjects(); await openMat(r.id);
+};
+
+// refresh notes only (keeps the PDF frame / scroll position untouched)
+async function reloadNotes() {
+  current = await api("/api/materials/" + currentId);
+  if (current.kind === "text") renderText();
+  renderNotes(); highlightPdfAll();
+  const pt = document.querySelector('.pt[data-p="notes"]'); if (pt) pt.textContent = `노트 (${current.notes.length})`;
+  loadList();
+}
+async function openMat(id) {
+  currentId = id;
+  current = await api("/api/materials/" + id);
+  pendingSel = null;
+  $("#mat").classList.add("open"); renderDetail(); loadList();
+}
+
+function renderDetail() {
+  const m = current;
+  pdfState = null;
+  const isPdf = m.kind === "file" && (m.mime === "application/pdf" || /\.pdf$/i.test(m.filename));
+  const isImg = m.kind === "file" && m.mime.startsWith("image/");
+  let viewer;
+  if (m.kind === "text") {
+    viewer = `<div class="bar"><button id="addTextNote">선택 영역에 노트 추가</button><button id="toggleMath"></button><span class="meta">드래그한 뒤 버튼을 누르세요</span></div><pre id="text"></pre>`;
+  } else {
+    const view = isPdf ? `<div class="pdfv" id="pdfv"></div>`
+      : isImg ? `<img src="/files/${m.id}">`
+      : `<div class="empty">이 형식은 미리보기를 지원하지 않습니다.</div>`;
+    viewer = `<div class="bar">페이지 <input id="pageNo" type="number" min="1" value="1" style="width:70px">
+      <button id="goPage">이동</button>${isPdf ? '<span class="meta" id="pageTotal"></span><button id="zOut">−</button><button id="zIn">＋</button><button id="addPdfNote">선택 영역에 노트 추가</button>' : ""}<button id="addPageNote">이 페이지에 노트 추가</button>
+      <a href="/files/${m.id}?dl=1">${esc(m.filename)} 다운로드</a></div>${view}`;
+  }
+  $("#matDetail").innerHTML = `
+    <div class="dhead mh"><button id="back">← 목록</button>
+      <div class="ttl"><div class="title">${esc(m.title)}</div>
+        <div class="meta">${gradeLabel(m.grade)} · ${esc(m.subject || "과목 없음")} · ${m.kind === "file" ? "파일" : "텍스트"} · ${esc(m.created_at)}</div></div>
+      <div class="acts"><button id="toggleNotes">노트 패널</button>${m.kind === "text" ? '<button id="editBody">본문 수정</button>' : ""}<button id="convMat">형식 변환</button><button id="editMat">정보 수정</button><button id="delMat" class="danger">삭제</button></div></div>
+    <div class="body"><div class="viewer">${viewer}</div>
+      <div class="notes ${notesOff ? "off" : ""}"><h4 class="ptabs"><button class="pt on" data-p="notes">노트 (${m.notes.length})</button><button class="pt" data-p="mq">공통 질문</button><button class="pt" data-p="rec">생기부</button></h4>
+        <div id="noteList"></div><div id="mqList" hidden></div><div id="mRec" hidden></div></div></div>`;
+  if (m.kind === "text") {
+    renderText();
+    $("#toggleMath").onclick = () => {
+      mathOn = !mathOn;
+      try { localStorage.setItem("mathOn", mathOn ? "1" : "0"); } catch (e) {}
+      renderText(); renderNotes();
+    };
+  }
+  renderNotes();
+  document.querySelectorAll(".pt").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".pt").forEach(x => x.classList.toggle("on", x === b));
+    panelTab = b.dataset.p;
+    $("#noteList").hidden = panelTab !== "notes"; $("#mqList").hidden = panelTab !== "mq"; $("#mRec").hidden = panelTab !== "rec";
+    if (panelTab === "mq") loadMQ();
+    if (panelTab === "rec") loadMRec();
+  });
+  if (panelTab !== "notes") document.querySelector(`.pt[data-p="${panelTab}"]`).click();
+
+  $("#back").onclick = closeMat;
+  $("#convMat").onclick = openConv;
+  if (m.kind === "text") $("#editBody").onclick = startEditBody;
+  $("#toggleNotes").onclick = () => { notesOff = !notesOff; document.querySelector(".notes").classList.toggle("off", notesOff); };
+  $("#editMat").onclick = () => {
+    const f = $("#fEditMat"); f.elements.title.value = m.title; f.elements.grade.value = m.grade; f.elements.subject.value = m.subject;
+    $("#dlgEditMat").showModal();
+  };
+  $("#delMat").onclick = async () => {
+    if (!await askConfirm("이 자료와 딸린 노트를 삭제할까요?")) return;
+    await api("/api/materials/" + m.id, "DELETE");
+    closeMat(); loadSubjects();
+  };
+  if (m.kind === "text") $("#addTextNote").onmousedown = e => e.preventDefault(), $("#addTextNote").onclick = addTextNote;
+  else {
+    pdfState = null;
+    if (isPdf) {
+      initPdf(m.id);
+      $("#zIn").onclick = () => zoomPdf(1.2); $("#zOut").onclick = () => zoomPdf(1 / 1.2);
+      $("#addPdfNote").onmousedown = e => e.preventDefault();
+      $("#addPdfNote").onclick = addPdfNote;
+    }
+    $("#goPage").onclick = () => gotoPage(+$("#pageNo").value || 1);
+    $("#addPageNote").onclick = () => openNoteDialog({ page: +$("#pageNo").value || 1 }, `페이지 ${+$("#pageNo").value || 1}`);
+  }
+}
+$("#fEditMat").onsubmit = async () => {
+  const f = $("#fEditMat");
+  await api("/api/materials/" + currentId, "PUT", { title: f.elements.title.value, grade: f.elements.grade.value, subject: f.elements.subject.value });
+  await loadSubjects(); await openMat(currentId);
+};
+
+// ---- PDF viewer (pdf.js): canvas + selectable text layer, notes anchored to a text range on a page ----
+let pdfState = null, pdfZoom = 1;
+function gotoPage(p) {
+  const st = pdfState;
+  if (!st || !st.pages) { $("#pageNo").value = p; return; }
+  p = Math.max(1, Math.min(st.n, p));
+  $("#pageNo").value = p;
+  st.host.scrollTop = st.els[p - 1].offsetTop - 8;
+}
+async function initPdf(id) {
+  const host = $("#pdfv"), st = pdfState = { host, id };
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/pdfjs/pdf.worker.min.js";
+    st.doc = await pdfjsLib.getDocument({ url: "/files/" + id }).promise;
+    if (pdfState !== st) return;
+    st.n = st.doc.numPages;
+    st.pages = await Promise.all([...Array(st.n)].map((_, i) => st.doc.getPage(i + 1)));
+    if (pdfState !== st) return;
+    $("#pageTotal").textContent = "/ " + st.n;
+    $("#pageNo").max = st.n;
+    buildPdf(st);
+  } catch (e) {
+    host.innerHTML = '<div class="empty">PDF를 불러오지 못했습니다. 위의 다운로드 링크로 열어보세요.</div>';
+  }
+}
+function buildPdf(st) {
+  const keep = st.cur || 1;
+  st.host.textContent = ""; st.els = []; st.obs && st.obs.disconnect();
+  st.scale = Math.max(0.3, Math.min(st.host.clientWidth - 24, 1000) / st.pages[0].getViewport({ scale: 1 }).width * pdfZoom);
+  st.obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) renderPdfPage(st, e.target); }), { root: st.host, rootMargin: "800px 0px" });
+  st.pages.forEach((pg, i) => {
+    const vp = pg.getViewport({ scale: st.scale }), el = document.createElement("div");
+    el.className = "pdfpage"; el.dataset.p = i + 1;
+    el.style.width = vp.width + "px"; el.style.height = vp.height + "px"; el.style.setProperty("--scale-factor", st.scale);
+    st.host.append(el); st.els.push(el); st.obs.observe(el);
+  });
+  st.host.onscroll = () => {
+    const top = st.host.scrollTop + st.host.clientHeight / 3;
+    let cur = 1;
+    for (const el of st.els) { if (el.offsetTop <= top) cur = +el.dataset.p; else break; }
+    st.cur = cur;
+    if (document.activeElement !== $("#pageNo")) $("#pageNo").value = cur;
+  };
+  if (keep > 1) gotoPage(keep);
+}
+function zoomPdf(f) {
+  const st = pdfState; if (!st || !st.pages) return;
+  pdfZoom = Math.max(0.4, Math.min(4, pdfZoom * f));
+  buildPdf(st);
+}
+async function renderPdfPage(st, el) {
+  if (el.dataset.done) return;
+  el.dataset.done = "1";
+  const pg = st.pages[+el.dataset.p - 1], vp = pg.getViewport({ scale: st.scale }), dpr = window.devicePixelRatio || 1;
+  const cv = document.createElement("canvas");
+  cv.width = Math.floor(vp.width * dpr); cv.height = Math.floor(vp.height * dpr);
+  cv.style.width = vp.width + "px"; cv.style.height = vp.height + "px";
+  el.append(cv);
+  try {
+    await pg.render({ canvasContext: cv.getContext("2d"), viewport: vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null }).promise;
+    if (pdfState !== st || !el.isConnected) return;
+    const layer = document.createElement("div"); layer.className = "textLayer";
+    el.append(layer);
+    await pdfjsLib.renderTextLayer({ textContentSource: await pg.getTextContent(), container: layer, viewport: vp, textDivs: [] }).promise;
+    highlightPdfPage(el);
+  } catch (e) { /* page stays blank */ }
+}
+function textNodesOf(layer) {
+  const w = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT), out = [];
+  let pos = 0, n;
+  while ((n = w.nextNode())) { out.push({ n, s: pos, e: pos + n.length }); pos += n.length; }
+  return out;
+}
+function highlightPdfPage(el) {
+  const layer = el.querySelector(".textLayer"); if (!layer) return;
+  layer.querySelectorAll("mark").forEach(m => m.replaceWith(...m.childNodes));
+  layer.normalize();
+  for (const note of current.notes) {
+    if (note.page !== +el.dataset.p || note.start == null) continue;
+    for (const t of textNodesOf(layer)) {
+      const a = Math.max(note.start, t.s), b = Math.min(note.end, t.e);
+      if (b <= a) continue;
+      const r = document.createRange(); r.setStart(t.n, a - t.s); r.setEnd(t.n, b - t.s);
+      const mk = document.createElement("mark"); mk.dataset.ids = note.id; mk.title = "노트";
+      mk.onclick = () => focusNote(note.id);
+      r.surroundContents(mk);
+    }
+  }
+}
+function highlightPdfAll() { pdfState?.els?.forEach(el => { if (el.dataset.done) highlightPdfPage(el); }); }
+function addPdfNote() {
+  const sel = getSelection(), host = $("#pdfv");
+  const pageOf = n => (n.nodeType === 3 ? n.parentElement : n)?.closest?.(".pdfpage");
+  if (!sel.rangeCount || sel.isCollapsed || !host.contains(sel.anchorNode)) { notify("PDF 본문에서 노트를 달 텍스트를 먼저 선택하세요."); return; }
+  const r = sel.getRangeAt(0);
+  const el = pageOf(r.startContainer), layer = el?.querySelector(".textLayer");
+  if (!layer) { notify("텍스트를 선택할 수 없는 영역입니다. (스캔본 PDF는 선택이 안 됩니다)"); return; }
+  const off = (node, o) => { const q = document.createRange(); q.setStart(layer, 0); q.setEnd(node, o); return q.toString().length; };
+  const total = layer.textContent.length;
+  let start = off(r.startContainer, r.startOffset);
+  let end = pageOf(r.endContainer) === el ? off(r.endContainer, r.endOffset) : total;   // a selection spanning pages is cut at the page end
+  if (end <= start) return;
+  const quote = layer.textContent.slice(start, end);
+  if (!quote.trim()) return;
+  const page = +el.dataset.p;
+  openNoteDialog({ page, start, end, quote }, `페이지 ${page} · “${quote.slice(0, 80)}”`);
+}
+function flashPdfNote(id, tries = 0) {
+  const mk = [...document.querySelectorAll("#pdfv mark")].find(m => m.dataset.ids.split(",").includes(String(id)));
+  if (!mk) { if (tries < 25) setTimeout(() => flashPdfNote(id, tries + 1), 120); return; }
+  mk.scrollIntoView({ block: "center" });
+  document.querySelectorAll("#pdfv mark.flash").forEach(m => m.classList.remove("flash"));
+  mk.classList.add("flash"); setTimeout(() => mk.classList.remove("flash"), 1500);
+}
+
+// text rendering with highlights (boundary splitting so overlapping ranges work)
+function startEditBody() {
+  const v = document.querySelector(".viewer");
+  v.innerHTML = `<div class="bar"><button id="saveBody">저장</button><button id="cancelBody">취소</button>
+    <span class="meta">본문을 고치면 노트 위치는 자동으로 맞춰지며, 노트가 달린 문장이 사라지면 위치 없는 노트가 됩니다.</span></div>
+    <textarea id="bodyEdit" style="flex:1;margin:0;border:0;border-radius:0;padding:12px;line-height:1.8;resize:none"></textarea>`;
+  $("#bodyEdit").value = current.content.replace(/\r\n/g, "\n");
+  $("#bodyEdit").focus();
+  $("#cancelBody").onclick = () => renderDetail();
+  $("#saveBody").onclick = async () => {
+    await api("/api/materials/" + currentId, "PUT", { content: $("#bodyEdit").value });
+    await openMat(currentId);
+  };
+}
+
+let mathOn = true;
+try { mathOn = localStorage.getItem("mathOn") !== "0"; } catch (e) {}
+const MATH_RE = /\\begin\{(array|[bBpvV]?matrix|cases|aligned|align\*?|alignat\*?|equation\*?|gather\*?|gathered|split)\}[\s\S]+?\\end\{\1\}|\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$(?!\s)([^$\n]+?)(?<!\s)\$/g;
+
+// formulas found in the raw text: [{s, e, tex, display}], non-overlapping, in order
+function mathTokens(txt) {
+  if (!mathOn || typeof katex === "undefined") return [];
+  const out = [];
+  for (const m of txt.matchAll(MATH_RE)) {
+    // groups: 1 = bare \begin{env} name, 2 = $$, 3 = \[ \], 4 = \( \), 5 = $
+    const display = m[1] != null || m[2] != null || m[3] != null;
+    out.push({ s: m.index, e: m.index + m[0].length, tex: m[1] != null ? m[0] : (m[2] ?? m[3] ?? m[4] ?? m[5]).trim(), display });
+  }
+  return out;
+}
+function widenArray(tex) {
+  return tex.replace(/\\begin\{array\}\{([^}]*)\}([\s\S]*?)\\end\{array\}/g, (all, cols, body) => {
+    const cells = Math.max(...body.split(/\\\\/).map(r => r.split("&").length));
+    return cols.replace(/\s/g, "").length >= cells ? all : `\\begin{array}{${"c".repeat(cells)}}${body}\\end{array}`;
+  });
+}
+function mathNode(t) {
+  try {
+    const span = document.createElement("span");
+    let html;
+    try { html = katex.renderToString(t.tex, { displayMode: t.display, throwOnError: true }); }
+    catch (e) { html = katex.renderToString(widenArray(t.tex), { displayMode: t.display, throwOnError: true }); }
+    span.innerHTML = html;
+    span.className = "math" + (t.display ? " display" : "");
+    span.dataset.len = t.e - t.s;                 // counts as its source length when computing note offsets
+    span.dataset.src = t.tex;
+    return span;
+  } catch (e) { return null; }                    // invalid LaTeX: caller falls back to the raw text
+}
+// plain text with formulas rendered, as an HTML string (used for note quotes)
+function richHtml(text) {
+  let out = "", last = 0;
+  for (const t of mathTokens(text)) {
+    out += esc(text.slice(last, t.s));
+    const n = mathNode(t);
+    out += n ? n.outerHTML : esc(text.slice(t.s, t.e));
+    last = t.e;
+  }
+  return out + esc(text.slice(last));
+}
+
+function renderText() {
+  const pre = $("#text"), txt = current.content, notes = current.notes.filter(n => n.start != null);
+  $("#toggleMath").textContent = "수식 렌더링: " + (mathOn ? "켜짐" : "꺼짐");
+  const toks = mathTokens(txt);
+  // a note boundary that falls inside a formula snaps to the formula's edge so formulas stay whole
+  const snap = (x, atEnd) => { const t = toks.find(t => t.s < x && x < t.e); return t ? (atEnd ? t.e : t.s) : x; };
+  const rs = notes.map(n => ({ id: n.id, start: snap(n.start, false), end: snap(n.end, true) }));
+  const cuts = new Set([0, txt.length]);
+  rs.forEach(n => { cuts.add(n.start); cuts.add(n.end); });
+  const pts = [...cuts].sort((a, b) => a - b);
+  pre.textContent = "";
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [a, b] = [pts[i], pts[i + 1]];
+    const ids = rs.filter(n => n.start <= a && n.end >= b).map(n => n.id);
+    const frag = document.createDocumentFragment();
+    let pos = a;
+    for (const t of toks.filter(t => t.s >= a && t.e <= b)) {
+      if (t.s > pos) frag.append(txt.slice(pos, t.s));
+      frag.append(mathNode(t) || txt.slice(t.s, t.e));
+      pos = t.e;
+    }
+    if (pos < b) frag.append(txt.slice(pos, b));
+    if (ids.length) {
+      const mk = document.createElement("mark");
+      mk.append(frag); mk.dataset.ids = ids.join(",");
+      mk.title = "노트 " + ids.length + "개";
+      mk.onclick = () => focusNote(ids[0]);
+      pre.append(mk);
+    } else pre.append(frag);
+  }
+}
+
+// character offset (in the RAW text) of a DOM boundary point; inside a formula it snaps to the formula's edge
+function offsetOf(pre, node, off, isEnd) {
+  let total = 0, result = null;
+  const walk = n => {
+    if (result !== null) return;
+    if (n.nodeType === 3) {
+      if (n === node) result = total + off; else total += n.length;
+    } else if (n.classList && n.classList.contains("math")) {
+      const len = +n.dataset.len;
+      if (n === node || n.contains(node)) result = total + (isEnd ? len : 0); else total += len;
+    } else if (n === node) {
+      for (let i = 0; i < off && result === null; i++) walk(n.childNodes[i]);
+      if (result === null) result = total;
+    } else n.childNodes.forEach(walk);
+  };
+  walk(pre);
+  return result ?? total;
+}
+function addTextNote() {
+  const pre = $("#text"), sel = getSelection();
+  if (!sel.rangeCount || sel.isCollapsed || !pre.contains(sel.anchorNode) || !pre.contains(sel.focusNode)) {
+    notify("본문에서 노트를 달 텍스트를 먼저 선택하세요."); return;
+  }
+  const r = sel.getRangeAt(0);
+  const start = offsetOf(pre, r.startContainer, r.startOffset, false), end = offsetOf(pre, r.endContainer, r.endOffset, true);
+  if (end <= start) return;
+  openNoteDialog({ start, end }, `“${current.content.slice(start, end).slice(0, 80)}” (${start}–${end})`);
+}
+
+function renderNotes() {
+  const isText = current.kind === "text";
+  $("#noteList").innerHTML = current.notes.map(n => `
+    <div class="note" id="note${n.id}">
+      ${isText ? `<div class="q" data-goto="${n.id}">${n.start == null ? "(본문 수정으로 위치를 잃은 노트) " : ""}${richHtml(n.quote)}</div>` : `<div class="pg" data-page="${n.page}">페이지 ${n.page} ▸</div>${n.quote ? `<div class="q" ${n.start != null ? `data-pgoto="${n.id}"` : 'style="cursor:default"'}>${esc(n.quote)}</div>` : ""}`}
+      <div class="b">${esc(n.body)}</div>
+      <div class="foot"><span class="meta">${esc(n.created_at)}</span><span class="act"><button data-edit="${n.id}">수정</button><button class="danger" data-del="${n.id}">삭제</button></span></div>
+    </div>`).join("") || '<div class="meta" style="padding:12px">노트가 없습니다.</div>';
+  document.querySelectorAll("[data-goto]").forEach(el => el.onclick = () => flashMark(+el.dataset.goto));
+  document.querySelectorAll("[data-page]").forEach(el => el.onclick = () => gotoPage(+el.dataset.page));
+  document.querySelectorAll("[data-pgoto]").forEach(el => el.onclick = () => {
+    const n = current.notes.find(x => x.id === +el.dataset.pgoto); gotoPage(n.page); flashPdfNote(n.id);
+  });
+  document.querySelectorAll("[data-edit]").forEach(el => el.onclick = () => {
+    const n = current.notes.find(x => x.id === +el.dataset.edit);
+    openNoteDialog({ editId: n.id }, n.quote ? `“${n.quote.slice(0, 80)}”` : `페이지 ${n.page}`, n.body);
+  });
+  document.querySelectorAll("[data-del]").forEach(el => el.onclick = async () => {
+    if (!await askConfirm("노트를 삭제할까요?")) return;
+    await api("/api/notes/" + el.dataset.del, "DELETE"); await reloadNotes();
+  });
+}
+function focusNote(id) { $("#note" + id)?.scrollIntoView({ block: "nearest" }); }
+function flashMark(id) {
+  const mk = [...document.querySelectorAll("#text mark")].find(m => m.dataset.ids.split(",").includes(String(id)));
+  if (!mk) return;
+  mk.scrollIntoView({ block: "center" });
+  document.querySelectorAll("#text mark.flash").forEach(m => m.classList.remove("flash"));
+  mk.classList.add("flash"); setTimeout(() => mk.classList.remove("flash"), 1500);
+}
+
+let noteTarget = null;
+function openNoteDialog(target, ctx, body = "") {
+  noteTarget = target; $("#noteCtx").textContent = ctx; $("#fNote").elements.body.value = body;
+  $("#dlgNote").showModal(); $("#fNote").elements.body.focus();
+}
+$("#fNote").onsubmit = async () => {
+  const body = $("#fNote").elements.body.value;
+  if (noteTarget.editId) await api("/api/notes/" + noteTarget.editId, "PUT", { body });
+  else await api(`/api/materials/${currentId}/notes`, "POST", { ...noteTarget, body });
+  await reloadNotes();
+};
+
+// ---- universities (with their common-question answers) ----
+let unis = [], qs = [], selUni = null, editUni = null, editQ = null;
+const dday = d => {
+  if (!d) return "";
+  const diff = Math.round((new Date(d + "T00:00:00") - new Date(new Date().toDateString())) / 864e5);
+  return diff === 0 ? "D-Day" : diff > 0 ? "D-" + diff : "D+" + -diff;
+};
+async function loadUnis() {
+  [unis, qs] = await Promise.all([api("/api/universities"), api("/api/questions")]);
+  if (!unis.some(u => u.id === selUni)) selUni = unis[0]?.id ?? null;
+  renderUniList(); renderUniDetail();
+}
+function renderUniList() {
+  $("#uniList").innerHTML = unis.map(u => `
+    <div class="rec-item ${u.id === selUni ? "on" : ""}" data-u="${u.id}">
+      <div class="t">${esc(u.name)} ${esc(u.department)}<span>${esc(u.status)}</span></div>
+      <div class="pv">${u.interview_date ? `면접 ${esc(u.interview_date)} · ${dday(u.interview_date)}` : "면접일 미정"}</div>
+    </div>`).join("") || '<div class="meta" style="padding:16px">등록된 대학이 없습니다.</div>';
+  $("#uniList").querySelectorAll("[data-u]").forEach(el => el.onclick = () => { selUni = +el.dataset.u; renderUniList(); renderUniDetail(); });
+}
+function renderUniDetail() {
+  const u = unis.find(x => x.id === selUni), box = $("#uniDetail");
+  if (!u) { box.innerHTML = '<div class="empty">왼쪽에서 대학을 선택하세요.</div>'; return; }
+  const f = (l, v) => v ? `<div class="f"><span>${l}</span><div>${esc(v)}</div></div>` : "";
+  box.innerHTML = `
+    <div class="dhead"><span class="title">${esc(u.name)} ${esc(u.department)}</span>
+      <span class="badge">${esc(u.status)}</span>
+      ${u.interview_date ? `<span class="meta">면접 ${esc(u.interview_date)} <span class="dday">${dday(u.interview_date)}</span></span>` : ""}
+      <button id="uniEdit">수정</button><button id="uniDel" class="danger">삭제</button></div>
+    <div class="reader"><div class="doc">
+      ${f("학교/학과 특성", u.traits)}${f("장점", u.strengths)}${f("메모", u.memo)}
+      <h4>공통 질문 · 답변 ${qs.filter(q => q.answers[u.id]).length}/${qs.length}<button id="addQ">+ 질문 추가</button></h4>
+      ${qs.map(q => `<div class="qb">
+        <div class="qh"><div class="qt">${esc(q.text)}</div><span class="qa"><button data-qe="${q.id}">질문 수정</button><button class="danger" data-qd="${q.id}">삭제</button></span></div>
+        <div class="ans"><span>${esc(u.name)} 답변<b class="saved">저장됨</b></span>
+          <textarea rows="4" data-q="${q.id}">${esc(q.answers[u.id] || "")}</textarea></div>
+      </div>`).join("") || '<div class="meta">등록된 공통 질문이 없습니다.</div>'}
+    </div></div>`;
+  $("#uniEdit").onclick = () => showUni(u);
+  $("#uniDel").onclick = async () => {
+    if (await askConfirm(`${u.name} ${u.department} 을(를) 삭제할까요? 이 대학의 답변도 함께 삭제됩니다.`)) { await api("/api/universities/" + u.id, "DELETE"); loadUnis(); }
+  };
+  $("#addQ").onclick = () => { editQ = null; $("#fQ").reset(); $("#dlgQ").showModal(); };
+  box.querySelectorAll("textarea[data-q]").forEach(t => {
+    const q = qs.find(x => x.id === +t.dataset.q);
+    t.onblur = async () => {
+      if (t.value === (q.answers[u.id] || "")) return;
+      await api(`/api/questions/${q.id}/answers/${u.id}`, "PUT", { body: t.value });
+      if (t.value.trim()) q.answers[u.id] = t.value; else delete q.answers[u.id];
+      const s = t.previousElementSibling.querySelector(".saved"); s.classList.add("on"); setTimeout(() => s.classList.remove("on"), 1200);
+    };
+  });
+  box.querySelectorAll("[data-qe]").forEach(b => b.onclick = () => {
+    editQ = qs.find(q => q.id === +b.dataset.qe); $("#fQ").elements.text.value = editQ.text; $("#dlgQ").showModal();
+  });
+  box.querySelectorAll("[data-qd]").forEach(b => b.onclick = async () => {
+    if (await askConfirm("질문과 모든 대학의 답변을 삭제할까요?")) { await api("/api/questions/" + b.dataset.qd, "DELETE"); loadUnis(); }
+  });
+}
+function showUni(u) {
+  editUni = u; const f = $("#fUni"); f.reset();
+  for (const k of ["name", "department", "interview_date", "status", "traits", "strengths", "memo"]) f.elements[k].value = u ? u[k] : (k === "status" ? "준비중" : "");
+  $("#dlgUni").showModal();
+}
+$("#addUni").onclick = () => showUni(null);
+$("#fUni").onsubmit = async () => {
+  const f = $("#fUni"), data = {};
+  for (const k of ["name", "department", "interview_date", "status", "traits", "strengths", "memo"]) data[k] = f.elements[k].value;
+  if (editUni) await api("/api/universities/" + editUni.id, "PUT", data);
+  else selUni = (await api("/api/universities", "POST", data)).id;
+  loadUnis();
+};
+$("#fQ").onsubmit = async () => {
+  const text = $("#fQ").elements.text.value;
+  if (editQ) await api("/api/questions/" + editQ.id, "PUT", { text }); else await api("/api/questions", "POST", { text });
+  loadUnis();
+};
+
+// ---- 생기부 linked to the open material (same grade + subject) ----
+async function loadMRec() {
+  const m = current, box = $("#mRec");
+  if (!m.subject) { box.innerHTML = '<div class="meta" style="padding:12px">자료에 과목이 지정되어 있지 않아 생기부와 연결할 수 없습니다. 상단의 "수정"에서 과목을 지정하세요.</div>'; return; }
+  const { record } = await api(`/api/materials/${m.id}/record`);
+  if (!record) {
+    box.innerHTML = `<div style="padding:12px"><div class="meta" style="margin-bottom:8px">${gradeLabel(m.grade)} ${esc(m.subject)} 생기부가 아직 없습니다.</div>
+      <button id="mrNew" style="width:100%">+ 이 과목 생기부 등록</button></div>`;
+    $("#mrNew").onclick = () => showRec(null, { grade: m.grade, subject: m.subject });
+    return;
+  }
+  box.innerHTML = `<div class="mq"><div class="meta">${gradeLabel(record.grade)} ${esc(record.subject)} · ${esc(record.updated_at)}</div>
+    <div style="white-space:pre-wrap;line-height:1.8;margin-top:6px">${esc(record.content) || "(내용 없음)"}</div>
+    <div class="act" style="margin-top:6px"><button id="mrEdit">생기부 수정</button></div></div>`;
+  $("#mrEdit").onclick = () => showRec(record);
+}
+
+// ---- 생기부 records ----
+let editRec = null;
+let recRows = [], selRec = null;
+$("#expRec").onclick = async () => {
+  if (!window.pywebview?.api) { location.href = "/api/records/export.pdf"; return; }   // plain browser
+  const r = await pywebview.api.save_records_pdf();
+  if (r.error) notify(r.error); else if (r.path) notify("저장했습니다: " + r.path);
+};
+async function loadRecs() {
+  const p = new URLSearchParams({ q: $("#rq").value, grade: $("#rGrade").value });
+  recRows = await api("/api/records?" + p);
+  loadSubjects();
+  if (!recRows.some(r => r.id === selRec)) selRec = recRows[0]?.id ?? null;
+  renderRecList(); renderRecDetail();
+}
+function renderRecList() {
+  const byGrade = {};
+  recRows.forEach(r => (byGrade[r.grade] ||= []).push(r));
+  $("#recList").innerHTML = [1, 2, 3, 0].filter(g => byGrade[g]).map(g =>
+    `<div class="rec-gh">${gradeLabel(g)} · ${byGrade[g].length}</div>` + byGrade[g].map(r => `
+    <div class="rec-item ${r.id === selRec ? "on" : ""}" data-r="${r.id}">
+      <div class="t">${esc(r.subject)}<span>${r.content.length.toLocaleString()}자</span></div>
+      <div class="pv">${esc(r.content.replace(/\s+/g, " ").slice(0, 60)) || "(내용 없음)"}</div>
+    </div>`).join("")).join("") || '<div class="meta" style="padding:16px">등록된 생기부가 없습니다.</div>';
+  $("#recList").querySelectorAll("[data-r]").forEach(el => el.onclick = () => { selRec = +el.dataset.r; renderRecList(); renderRecDetail(); });
+}
+function renderRecDetail() {
+  const r = recRows.find(x => x.id === selRec), box = $("#recDetail");
+  if (!r) { box.innerHTML = '<div class="empty">왼쪽에서 과목을 선택하세요.</div>'; return; }
+  const paras = r.content.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  box.innerHTML = `
+    <div class="dhead"><span class="title">${esc(r.subject)}</span>
+      <span class="meta">${gradeLabel(r.grade)} · ${r.content.length.toLocaleString()}자 · ${esc(r.updated_at)}</span>
+      <button id="recEdit">수정</button><button id="recDel" class="danger">삭제</button></div>
+    <div class="reader"><div class="doc">
+      ${r.materials.length ? `<div class="chips meta" style="margin-bottom:14px">관련 자료 ${r.materials.map(m => `<a href="#" data-gm="${m.id}">${esc(m.title)}</a>`).join("")}</div>` : ""}
+      ${paras.map(p => `<p>${esc(p)}</p>`).join("") || '<div class="meta">(내용 없음)</div>'}
+    </div></div>`;
+  $("#recEdit").onclick = () => showRec(r);
+  $("#recDel").onclick = async () => {
+    if (await askConfirm(`${gradeLabel(r.grade)} ${r.subject} 생기부를 삭제할까요?`)) { await api("/api/records/" + r.id, "DELETE"); loadRecs(); }
+  };
+  box.querySelectorAll("[data-gm]").forEach(a => a.onclick = e => {
+    e.preventDefault(); document.querySelector("[data-tab=mat]").click(); openMat(+a.dataset.gm);
+  });
+}
+async function showRec(r, preset) {
+  editRec = r; const f = $("#fRec"); f.reset();
+  recSubjectOptions = await api("/api/record-subjects");
+  f.elements.grade.value = r ? r.grade : preset ? preset.grade : ($("#rGrade").value || "1");
+  f.elements.subject.value = r ? r.subject : preset ? preset.subject : "";
+  f.elements.content.value = r ? r.content : "";
+  $("#dlgRec").showModal();
+}
+$("#addRec").onclick = () => showRec(null);
+$("#fRec").onsubmit = async e => {
+  const f = $("#fRec");
+  try {
+    const saved = await api("/api/records", "POST", { id: editRec?.id, grade: f.elements.grade.value, subject: f.elements.subject.value, content: f.elements.content.value });
+    selRec = saved.id;
+  } catch (err) { return; }
+  loadRecs();
+  if (current && panelTab === "rec" && !$("#mat").hidden) loadMRec();
+};
+let rtimer;
+$("#rq").oninput = () => { clearTimeout(rtimer); rtimer = setTimeout(loadRecs, 200); };
+$("#rGrade").onchange = loadRecs;
+
+// ---- per-material common questions ----
+let editMQ = null;
+async function loadMQ() {
+  const qs = await api(`/api/materials/${currentId}/questions`);
+  const box = $("#mqList");
+  box.innerHTML = '<div style="padding:8px 12px"><button id="addMQ" style="width:100%">+ 질문 등록</button></div>' + (qs.map(q => `
+    <div class="mq"><div class="qt">${esc(q.text)}</div>
+      <textarea rows="4" data-q="${q.id}" placeholder="이 자료에 대한 답변">${esc(q.answer)}</textarea>
+      <div class="act"><span class="saved"></span><button data-e="${q.id}">질문 수정</button><button class="danger" data-d="${q.id}">삭제</button></div></div>`).join("")
+    || '<div class="meta" style="padding:12px">등록된 질문이 없습니다.</div>');
+  $("#addMQ").onclick = () => { editMQ = null; $("#fMQ").reset(); $("#dlgMQ").showModal(); };
+  box.querySelectorAll("textarea").forEach(t => {
+    let last = t.value;
+    t.onblur = async () => {
+      if (t.value === last) return;
+      await api(`/api/material-questions/${t.dataset.q}/answers/${currentId}`, "PUT", { body: t.value });
+      last = t.value;
+      const s = t.nextElementSibling.querySelector(".saved"); s.textContent = "저장됨"; setTimeout(() => s.textContent = "", 1200);
+    };
+  });
+  box.querySelectorAll("[data-e]").forEach(b => b.onclick = () => {
+    editMQ = qs.find(q => q.id === +b.dataset.e); $("#fMQ").elements.text.value = editMQ.text; $("#dlgMQ").showModal();
+  });
+  box.querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
+    if (await askConfirm("질문을 삭제하면 모든 자료의 답변도 사라집니다. 삭제할까요?")) { await api("/api/material-questions/" + b.dataset.d, "DELETE"); loadMQ(); }
+  });
+}
+$("#fMQ").onsubmit = async () => {
+  const text = $("#fMQ").elements.text.value;
+  if (editMQ) await api("/api/material-questions/" + editMQ.id, "PUT", { text }); else await api("/api/material-questions", "POST", { text });
+  loadMQ();
+};
+
+// ---- interview tip notes ----
+marked.use({ gfm: true, breaks: true, walkTokens(t) {
+  if (t.type === "html") { t.type = "text"; t.text = esc(t.raw); t.tokens = undefined; }
+  if ((t.type === "link" || t.type === "image") && !/^(https?:|mailto:|#)/i.test(t.href)) t.href = "#";
+} });
+const mdHtml = src => marked.parse(src || "");
+let tipMode = "view";
+let tips = [], selTip = null, tipTimer = null;
+async function loadTips() {
+  tips = await api("/api/tips");
+  if (!tips.some(t => t.id === selTip)) selTip = tips[0]?.id ?? null;
+  renderTipList(); renderTipDetail();
+}
+function renderTipList() {
+  $("#tipList").innerHTML = tips.map(t => `
+    <div class="rec-item ${t.id === selTip ? "on" : ""}" data-t="${t.id}">
+      <div class="t">${esc(t.title) || "(제목 없음)"}<span>${esc(t.updated_at.slice(0, 10))}</span></div>
+      <div class="pv">${esc(t.content.replace(/\s+/g, " ").slice(0, 60)) || "(내용 없음)"}</div>
+    </div>`).join("") || '<div class="meta" style="padding:16px">노트가 없습니다.</div>';
+  $("#tipList").querySelectorAll("[data-t]").forEach(el => el.onclick = async () => {
+    await flushTip(); selTip = +el.dataset.t; tipMode = "view"; renderTipList(); renderTipDetail();
+  });
+}
+function renderTipDetail() {
+  const t = tips.find(x => x.id === selTip), box = $("#tipDetail");
+  if (!t) { box.innerHTML = '<div class="empty">노트를 선택하거나 새로 만드세요.</div>'; return; }
+  if (tipMode === "view" && !t.content.trim() && !t.title.trim()) tipMode = "edit";   // brand-new note: start typing
+  const edit = tipMode === "edit";
+  box.innerHTML = `
+    <div class="dhead"><input class="title" id="tipTitle" placeholder="제목" value="${esc(t.title)}" style="flex:1">
+      <span class="meta" id="tipState">${esc(t.updated_at)}</span>
+      <span class="tipmode"><button data-m="edit" class="${edit ? "on" : ""}">편집</button><button data-m="view" class="${edit ? "" : "on"}">미리보기</button></span>
+      <button id="tipDel" class="danger">삭제</button></div>
+    ${edit ? `<textarea class="tipbody" id="tipBody" placeholder="마크다운으로 자유롭게 적어두세요. (# 제목, - 목록, **굵게**, > 인용)">${esc(t.content)}</textarea>`
+           : `<div class="md" id="tipView">${mdHtml(t.content) || '<div class="meta">(내용 없음)</div>'}</div>`}`;
+  const sched = () => { $("#tipState").textContent = "저장 중…"; clearTimeout(tipTimer); tipTimer = setTimeout(flushTip, 600); };
+  $("#tipTitle").oninput = sched;
+  if (edit) $("#tipBody").oninput = sched;
+  box.querySelectorAll(".tipmode button").forEach(b => b.onclick = async () => {
+    await flushTip(); tipMode = b.dataset.m; renderTipDetail(); if (tipMode === "edit") $("#tipBody").focus();
+  });
+  box.querySelectorAll("#tipView a").forEach(a => a.onclick = e => {
+    e.preventDefault();
+    const u = a.getAttribute("href");
+    if (/^(https?:|mailto:)/i.test(u)) window.pywebview?.api ? pywebview.api.open_url(u) : window.open(u, "_blank");
+  });
+  $("#tipDel").onclick = async () => {
+    if (!await askConfirm("이 노트를 삭제할까요?")) return;
+    clearTimeout(tipTimer); tipTimer = null;
+    await api("/api/tips/" + t.id, "DELETE"); loadTips();
+  };
+}
+async function flushTip() {
+  clearTimeout(tipTimer); tipTimer = null;
+  const t = tips.find(x => x.id === selTip), ti = $("#tipTitle"), tb = $("#tipBody");
+  if (!t || !ti) return;
+  const body = tb ? tb.value : t.content;
+  if (ti.value === t.title && body === t.content) { const s = $("#tipState"); if (s) s.textContent = t.updated_at; return; }
+  t.title = ti.value; t.content = body;
+  const r = await api("/api/tips/" + t.id, "PUT", { title: t.title, content: t.content });
+  t.updated_at = r.updated_at;
+  if ($("#tipState") && selTip === t.id) $("#tipState").textContent = "저장됨 " + t.updated_at;
+  renderTipList();
+}
+$("#addTip").onclick = async () => {
+  await flushTip();
+  selTip = (await api("/api/tips", "POST", {})).id; tipMode = "edit";
+  await loadTips(); $("#tipTitle")?.focus();
+};
+
+// ---- update (GitHub releases) ----
+let updInfo = null;
+async function checkUpdate(manual) {
+  let r;
+  try { r = await (await fetch("/api/update/check")).json(); } catch (e) { return; }
+  updInfo = r;
+  $("#verInfo").textContent = "현재 버전 v" + r.current + (r.latest ? " · 최신 v" + r.latest : "");
+  $("#updBadge").hidden = !r.newer; $("#updBadge").textContent = r.newer ? "새 버전 v" + r.latest : "";
+  if (r.newer) { if (manual || !checkUpdate.asked) { checkUpdate.asked = true; askUpdate(); } }
+  else if (manual) notify(r.error || "최신 버전입니다. (v" + r.current + ")");
+}
+async function askUpdate() {
+  const r = updInfo, notes = (r.notes || "").trim().slice(0, 600);
+  const msg = "새 버전 v" + r.latest + "이(가) 있습니다. (현재 v" + r.current + ")" + (notes ? "\n\n" + notes : "") +
+    (r.can_apply ? "\n\n지금 업데이트할까요? 앱이 잠시 종료됐다가 다시 시작됩니다. 자료는 그대로 유지됩니다." : "\n\n이 실행 방식(소스 실행)에서는 자동 업데이트가 안 됩니다. 릴리스 페이지를 열까요?");
+  if (!await askConfirm(msg)) return;
+  if (!r.can_apply) { window.pywebview?.api ? pywebview.api.open_url(r.url) : window.open(r.url, "_blank"); return; }
+  const res = await fetch("/api/update/apply", { method: "POST" });
+  if (!res.ok) { notify((await res.json().catch(() => ({}))).error || "업데이트를 시작하지 못했습니다."); return; }
+  const d = $("#dlgUpd"); d.oncancel = e => e.preventDefault(); d.showModal();
+  const tick = async () => {
+    let s;
+    try { s = await (await fetch("/api/update/status")).json(); } catch (e) { $("#updText").textContent = "다시 시작하는 중…"; return setTimeout(tick, 1000); }
+    if (s.phase === "error") { d.close(); notify("업데이트 실패: " + s.error); return; }
+    $("#updText").textContent = s.phase === "installing" ? "설치하는 중…" :
+      "다운로드 중… " + (s.total ? Math.round(s.done / s.total * 100) + "%" : Math.round(s.done / 1048576) + " MB");
+    setTimeout(tick, 500);
+  };
+  tick();
+}
+$("#updBadge").onclick = askUpdate;
+$("#chkUpd").onclick = () => checkUpdate(true);
+
+loadSubjects(); loadList();
+setTimeout(() => checkUpdate(false), 1500);
+</script>
+</body>
+</html>

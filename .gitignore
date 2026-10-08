@@ -1,0 +1,13 @@
+# personal data: never commit
+data.db
+data.db-*
+uploads/
+error.log
+# python / build
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec.bak
+*.spec
