@@ -673,7 +673,7 @@ function renderDetail() {
       : isImg ? `<img src="/files/${m.id}">`
       : `<div class="empty">이 형식은 미리보기를 지원하지 않습니다.</div>`;
     viewer = `<div class="bar">페이지 <input id="pageNo" type="number" min="1" value="1" style="width:70px">
-      <button id="goPage">이동</button>${isPdf ? '<span class="meta" id="pageTotal"></span><button id="zOut">−</button><button id="zIn">＋</button><button id="addPdfNote">선택 영역에 노트 추가</button>' : ""}<button id="addPageNote">이 페이지에 노트 추가</button>
+      <button id="goPage">이동</button>${isPdf ? '<span class="meta" id="pageTotal"></span><button id="zOut" title="축소 (Ctrl + 휠 / Ctrl −)">−</button><button id="zPct" title="클릭: 100%로" style="min-width:48px">100%</button><button id="zIn" title="확대 (Ctrl + 휠 / Ctrl +)">＋</button><button id="zFit" title="너비에 맞춤">맞춤</button><button id="addPdfNote">선택 영역에 노트 추가</button>' : ""}<button id="addPageNote">이 페이지에 노트 추가</button>
       <a href="/files/${m.id}?dl=1">${esc(m.filename)} 다운로드</a></div>${view}`;
   }
   $("#matDetail").innerHTML = `
@@ -721,6 +721,8 @@ function renderDetail() {
     if (isPdf) {
       initPdf(m.id);
       $("#zIn").onclick = () => zoomPdf(1.2); $("#zOut").onclick = () => zoomPdf(1 / 1.2);
+      $("#zPct").onclick = () => zoomPdf(0, 1); $("#zFit").onclick = () => zoomPdf(0, "fit");
+      $("#pdfv").addEventListener("wheel", e => { if (e.ctrlKey) { e.preventDefault(); zoomPdf(e.deltaY < 0 ? 1.1 : 1 / 1.1); } }, { passive: false });
       $("#addPdfNote").onmousedown = e => e.preventDefault();
       $("#addPdfNote").onclick = addPdfNote;
     }
@@ -759,8 +761,9 @@ async function initPdf(id) {
     host.innerHTML = '<div class="empty">PDF를 불러오지 못했습니다. 위의 다운로드 링크로 열어보세요.</div>';
   }
 }
-function buildPdf(st) {
-  const keep = st.cur || 1;
+function buildPdf(st, keepScroll) {
+  const keep = keepScroll ? 1 : (st.cur || 1);
+  $("#zPct").textContent = Math.round(pdfZoom * 100) + "%";
   st.host.textContent = ""; st.els = []; st.obs && st.obs.disconnect();
   st.scale = Math.max(0.3, Math.min(st.host.clientWidth - 24, 1000) / st.pages[0].getViewport({ scale: 1 }).width * pdfZoom);
   st.obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) renderPdfPage(st, e.target); }), { root: st.host, rootMargin: "800px 0px" });
@@ -779,11 +782,24 @@ function buildPdf(st) {
   };
   if (keep > 1) gotoPage(keep);
 }
-function zoomPdf(f) {
+// f: multiply the current zoom; to: absolute zoom (1 = default, "fit" = fill the viewer width). Rebuilds are debounced so wheel zoom stays smooth.
+function zoomPdf(f, to) {
   const st = pdfState; if (!st || !st.pages) return;
-  pdfZoom = Math.max(0.4, Math.min(4, pdfZoom * f));
-  buildPdf(st);
+  const fit = (st.host.clientWidth - 24) / Math.min(st.host.clientWidth - 24, 1000);
+  pdfZoom = Math.max(0.3, Math.min(5, to === "fit" ? fit : to ? to : pdfZoom * f));
+  $("#zPct").textContent = Math.round(pdfZoom * 100) + "%";
+  clearTimeout(st.zt);
+  st.zt = setTimeout(() => {
+    const h = st.host, ry = h.scrollTop / (h.scrollHeight || 1), rx = h.scrollLeft / (h.scrollWidth || 1);
+    buildPdf(st, true); h.scrollTop = ry * h.scrollHeight; h.scrollLeft = rx * h.scrollWidth;       // keep the same spot in view
+  }, 120);
 }
+document.addEventListener("keydown", e => {
+  if (!pdfState || !pdfState.pages || !(e.ctrlKey || e.metaKey) || $("#mat").offsetParent === null) return;
+  if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomPdf(1.2); }
+  else if (e.key === "-") { e.preventDefault(); zoomPdf(1 / 1.2); }
+  else if (e.key === "0") { e.preventDefault(); zoomPdf(0, 1); }
+});
 async function renderPdfPage(st, el) {
   if (el.dataset.done) return;
   el.dataset.done = "1";
