@@ -102,6 +102,13 @@ CREATE TABLE IF NOT EXISTS material_answers (
   body TEXT NOT NULL,
   PRIMARY KEY (question_id, material_id)
 );
+CREATE TABLE IF NOT EXISTS checklist (
+  grade INTEGER NOT NULL,
+  subject TEXT NOT NULL,
+  done INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (grade, subject)
+);
 CREATE TABLE IF NOT EXISTS tips (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL DEFAULT '',
@@ -1062,6 +1069,76 @@ def update_apply():
 @app.get("/api/update/status")
 def update_status():
     return jsonify(updater.status())
+
+
+# ---------- checklist: has each (grade, subject) been mastered? ----------
+def _chk_key(j):
+    subject = (j.get("subject") or "").strip()
+    try:
+        grade = int(j.get("grade"))
+    except (TypeError, ValueError):
+        grade = None
+    if not subject or grade not in (0, 1, 2, 3):
+        return None
+    return grade, subject
+
+
+@app.get("/api/checklist")
+def checklist_list():
+    """Every (grade, subject) found in materials or the school record, plus the ones added by hand."""
+    conn = db()
+    items = {}
+
+    def item(g, sub):
+        return items.setdefault((g, sub), {"grade": g, "subject": sub, "materials": 0, "record": False, "done": False, "custom": False})
+
+    for r in conn.execute("SELECT grade, subject, COUNT(*) n FROM materials WHERE subject!='' GROUP BY grade, subject"):
+        item(r["grade"], r["subject"])["materials"] = r["n"]
+    for r in conn.execute("SELECT grade, subject FROM records WHERE subject!=''"):
+        item(r["grade"], r["subject"])["record"] = True
+    for r in conn.execute("SELECT grade, subject, done FROM checklist"):
+        it = item(r["grade"], r["subject"])
+        it["done"] = bool(r["done"])
+        it["custom"] = not (it["materials"] or it["record"])
+    order = {1: 0, 2: 1, 3: 2, 0: 3}
+    return jsonify(sorted(items.values(), key=lambda i: (order.get(i["grade"], 9), i["subject"])))
+
+
+@app.put("/api/checklist")
+def checklist_set():
+    k = _chk_key(request.get_json() or {})
+    if not k:
+        return jsonify(error="학년과 과목을 확인하세요."), 400
+    done = 1 if (request.get_json() or {}).get("done") else 0
+    conn = db()
+    conn.execute("INSERT INTO checklist(grade,subject,done,updated_at) VALUES(?,?,?,?) "
+                 "ON CONFLICT(grade,subject) DO UPDATE SET done=excluded.done, updated_at=excluded.updated_at",
+                 (*k, done, now()))
+    conn.commit()
+    return jsonify(ok=True)
+
+
+@app.post("/api/checklist")
+def checklist_add():
+    k = _chk_key(request.get_json() or {})
+    if not k:
+        return jsonify(error="학년과 과목을 입력하세요."), 400
+    conn = db()
+    conn.execute("INSERT OR IGNORE INTO checklist(grade,subject,done,updated_at) VALUES(?,?,0,?)", (*k, now()))
+    conn.commit()
+    return jsonify(ok=True)
+
+
+@app.delete("/api/checklist")
+def checklist_delete():
+    """Removes a hand-added entry (for subjects that come from materials/records it only clears the check)."""
+    k = _chk_key(request.get_json() or {})
+    if not k:
+        return jsonify(error="학년과 과목을 확인하세요."), 400
+    conn = db()
+    conn.execute("DELETE FROM checklist WHERE grade=? AND subject=?", k)
+    conn.commit()
+    return jsonify(ok=True)
 
 
 if __name__ == "__main__":
