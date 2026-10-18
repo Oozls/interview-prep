@@ -688,7 +688,9 @@ $("#fMat").onsubmit = async e => {
   const fd = new FormData($("#fMat"));
   if (addKind === "text") fd.delete("file"); else fd.delete("content");
   const r = await api("/api/materials", "POST", fd);
-  await loadSubjects(); await openMat(r.id);
+  await loadSubjects();
+  if ($("#mat").hidden) document.querySelector("[data-tab=mat]").click();
+  await openMat(r.id);
 };
 
 // refresh notes only (keeps the PDF frame / scroll position untouched)
@@ -1204,11 +1206,15 @@ function renderRecDetail() {
   box.innerHTML = `
     <div class="dhead"><span class="title">${esc(r.subject)}</span>
       <span class="meta">${gradeLabel(r.grade)} · ${r.content.length.toLocaleString()}자 · ${esc(r.updated_at)}</span>
-      <button id="recEdit">수정</button><button id="recDel" class="danger">삭제</button></div>
+      <button id="recAddMat">+ 자료 추가</button><button id="recEdit">수정</button><button id="recDel" class="danger">삭제</button></div>
     <div class="reader"><div class="doc">
       ${r.materials.length ? `<div class="chips meta" style="margin-bottom:14px">관련 자료 ${r.materials.map(m => `<a href="#" data-gm="${m.id}">${esc(m.title)}</a>`).join("")}</div>` : ""}
       ${paras.map(p => `<p>${esc(p)}</p>`).join("") || '<div class="meta">(내용 없음)</div>'}
     </div></div>`;
+  $("#recAddMat").onclick = () => {
+    $("#addMat").click();
+    const f = $("#fMat"); f.elements.grade.value = r.grade; f.elements.subject.value = r.subject;
+  };
   $("#recEdit").onclick = () => showRec(r);
   $("#recDel").onclick = async () => {
     if (await askConfirm(`${gradeLabel(r.grade)} ${r.subject} 생기부를 삭제할까요?`)) { await api("/api/records/" + r.id, "DELETE"); loadRecs(); }
