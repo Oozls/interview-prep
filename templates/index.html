@@ -134,6 +134,7 @@
   .note .act button:hover { color: var(--fg); border-color: var(--line); }
   .note .act button.danger:hover { color: var(--danger); border-color: var(--danger); }
   /* universities & tips */
+  .doc .uf textarea { width: 100%; box-sizing: border-box; resize: vertical; } .doc .uf .saved { float: right; color: var(--accent); font-weight: normal; }
   .doc .f { margin: 0 0 14px; } .doc .f span { color: var(--dim); font-size: 12px; display: block; } .doc .f div { white-space: pre-wrap; }
   .doc h4 { margin: 22px 0 8px; padding-bottom: 4px; font-weight: normal; color: var(--accent); font-size: 13px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
   .doc h4 button { font-size: 12px; padding: 1px 8px; }
@@ -1101,14 +1102,14 @@ function renderUniList() {
 function renderUniDetail() {
   const u = unis.find(x => x.id === selUni), box = $("#uniDetail");
   if (!u) { box.innerHTML = '<div class="empty">왼쪽에서 대학을 선택하세요.</div>'; return; }
-  const f = (l, v) => v ? `<div class="f"><span>${l}</span><div>${esc(v)}</div></div>` : "";
+  const f = (l, k) => `<div class="f uf"><span>${l}<b class="saved"></b></span><textarea rows="3" data-uf="${k}">${esc(u[k] || "")}</textarea></div>`;
   box.innerHTML = `
     <div class="dhead"><span class="title">${esc(u.name)} ${esc(u.department)}</span>
       <span class="badge">${esc(u.status)}</span>
       ${u.interview_date ? `<span class="meta">면접 ${esc(u.interview_date)} <span class="dday">${dday(u.interview_date)}</span></span>` : ""}
       <button id="uniEdit">수정</button><button id="uniDel" class="danger">삭제</button></div>
     <div class="reader"><div class="doc">
-      ${f("학교/학과 특성", u.traits)}${f("장점", u.strengths)}${f("메모", u.memo)}
+      ${f("학교/학과 특성", "traits")}${f("장점", "strengths")}${f("메모", "memo")}
       <h4>공통 질문 · 답변 ${qs.filter(q => q.answers[u.id]).length}/${qs.length}<button id="addQ">+ 질문 추가</button></h4>
       ${qs.map(q => `<div class="qb">
         <div class="qh"><div class="qt">${esc(q.text)}</div><span class="qa"><button data-qe="${q.id}">질문 수정</button><button class="danger" data-qd="${q.id}">삭제</button></span></div>
@@ -1120,6 +1121,17 @@ function renderUniDetail() {
   $("#uniDel").onclick = async () => {
     if (await askConfirm(`${u.name} ${u.department} 을(를) 삭제할까요? 이 대학의 답변도 함께 삭제됩니다.`)) { await api("/api/universities/" + u.id, "DELETE"); loadUnis(); }
   };
+  box.querySelectorAll("textarea[data-uf]").forEach(t => {
+    t.onblur = async () => {
+      const k = t.dataset.uf;
+      if (t.value === (u[k] || "")) return;
+      const data = {}; for (const x of ["name", "department", "interview_date", "status", "traits", "strengths", "memo"]) data[x] = u[x];
+      data[k] = t.value;
+      await api("/api/universities/" + u.id, "PUT", data);
+      u[k] = t.value;
+      const b = t.previousElementSibling.querySelector(".saved"); b.textContent = "저장됨"; setTimeout(() => b.textContent = "", 1200);
+    };
+  });
   $("#addQ").onclick = () => { editQ = null; $("#fQ").reset(); $("#dlgQ").showModal(); };
   box.querySelectorAll("textarea[data-q]").forEach(t => {
     const q = qs.find(x => x.id === +t.dataset.q);
