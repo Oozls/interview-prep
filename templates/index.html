@@ -169,6 +169,14 @@
   .chktools { display: flex; gap: 6px; } .chktools input { flex: 1; min-width: 0; } .chktools select { width: auto; }
   .chk .gh { color: var(--accent); font-size: 12px; padding: 14px 4px 4px; display: flex; justify-content: space-between; }
   .chk .gh span { color: var(--dim); }
+  input[type=checkbox] { -webkit-appearance: none; appearance: none; width: 16px !important; height: 16px !important; flex: none; margin: 0; padding: 0;
+    border: 1.5px solid #5a5a5a; border-radius: 4px; background: transparent; cursor: pointer; position: relative; vertical-align: middle;
+    transition: background .12s, border-color .12s, box-shadow .12s; }
+  input[type=checkbox]:hover { border-color: var(--accent); }
+  input[type=checkbox]:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,193,255,.3); }
+  input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
+  input[type=checkbox]:checked::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px;
+    border: solid #1e1e1e; border-width: 0 2px 2px 0; transform: rotate(45deg); }
   .ci { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
   .ci:hover { background: var(--panel); }
   .ci input { width: auto; margin: 0; flex: none; }
