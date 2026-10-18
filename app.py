@@ -1090,7 +1090,7 @@ def checklist_list():
     items = {}
 
     def item(g, sub):
-        return items.setdefault((g, sub), {"grade": g, "subject": sub, "materials": 0, "record": False, "done": False, "custom": False})
+        return items.setdefault((g, sub), {"grade": g, "subject": sub, "materials": 0, "record": False, "done": 0, "custom": False})
 
     for r in conn.execute("SELECT grade, subject, COUNT(*) n FROM materials WHERE subject!='' GROUP BY grade, subject"):
         item(r["grade"], r["subject"])["materials"] = r["n"]
@@ -1098,7 +1098,7 @@ def checklist_list():
         item(r["grade"], r["subject"])["record"] = True
     for r in conn.execute("SELECT grade, subject, done FROM checklist"):
         it = item(r["grade"], r["subject"])
-        it["done"] = bool(r["done"])
+        it["done"] = r["done"]
         it["custom"] = not (it["materials"] or it["record"])
     order = {1: 0, 2: 1, 3: 2, 0: 3}
     return jsonify(sorted(items.values(), key=lambda i: (order.get(i["grade"], 9), i["subject"])))
@@ -1109,7 +1109,8 @@ def checklist_set():
     k = _chk_key(request.get_json() or {})
     if not k:
         return jsonify(error="학년과 과목을 확인하세요."), 400
-    done = 1 if (request.get_json() or {}).get("done") else 0
+    d = (request.get_json() or {}).get("done")        # 0 = not yet, 1 = fully mastered, 2 = partly (true/false still accepted)
+    done = d if d in (0, 1, 2) and not isinstance(d, bool) else (1 if d else 0)
     conn = db()
     conn.execute("INSERT INTO checklist(grade,subject,done,updated_at) VALUES(?,?,?,?) "
                  "ON CONFLICT(grade,subject) DO UPDATE SET done=excluded.done, updated_at=excluded.updated_at",
