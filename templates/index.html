@@ -177,6 +177,10 @@
   input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
   input[type=checkbox]:checked::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px;
     border: solid #1e1e1e; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  input[type=file] { padding: 3px; color: var(--dim); font-size: 12px; cursor: pointer; }
+  input[type=file]::file-selector-button { font: inherit; font-size: 12px; color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 4px; padding: 4px 12px; margin-right: 10px; cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
+  input[type=file]:hover::file-selector-button { border-color: var(--accent); color: var(--accent); background: rgba(79,193,255,.08); }
   .ci { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
   .ci:hover { background: var(--panel); }
   .ci input { width: auto; margin: 0; flex: none; }
@@ -677,6 +681,7 @@ document.querySelectorAll("#dlgMat .seg button").forEach(b => b.onclick = () => 
   addKind = b.dataset.k;
   document.querySelectorAll("#dlgMat .seg button").forEach(x => x.classList.toggle("on", x === b));
   $("#lText").hidden = addKind !== "text"; $("#lFile").hidden = addKind !== "file";
+  $("#pdfRow").hidden = addKind !== "text";
 });
 $("#addMat").onclick = () => { $("#fMat").reset(); $("#pdfStatus").textContent = ""; $("#dlgMat").showModal(); };
 $("#fMat").onsubmit = async e => {
