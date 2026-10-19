@@ -230,6 +230,15 @@
   .ci .x { visibility: hidden; padding: 0 6px; } .ci:hover .x { visibility: visible; }
   /* modal */
   dialog { background: var(--panel); color: var(--fg); border: 1px solid var(--line); padding: 16px; width: min(560px, 92vw); }
+  .helpbtn { width: 26px; height: 26px; padding: 0; border-radius: 50%; margin-left: 6px; color: var(--dim); display: grid; place-items: center; }
+  .helpbtn:hover { color: var(--accent); border-color: var(--accent); }
+  dialog.help { width: min(680px, 94vw); max-height: 86vh; display: none; flex-direction: column; padding: 0; }
+  dialog.help[open] { display: flex; }
+  .help .hh { padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+  .help .hb { overflow: auto; padding: 4px 18px 16px; line-height: 1.75; font-size: 13px; }
+  .help h3 { margin: 18px 0 4px; font-size: 14px; font-weight: normal; color: var(--accent); }
+  .help ul { margin: 0; padding-left: 18px; } .help li { margin: 2px 0; }
+  .help kbd { border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; font: inherit; font-size: 11px; background: var(--bg); }
   dialog.msg { width: min(380px, 92vw); } #msgText { white-space: pre-line; line-height: 1.7; word-break: keep-all; }
   dialog::backdrop { background: rgba(0,0,0,.6); }
   dialog label { display: block; margin-top: 8px; color: var(--dim); font-size: 12px; }
@@ -254,6 +263,7 @@
   <button class="tab" data-tab="chk">체크리스트</button>
   <button id="updBadge" hidden style="margin-left:auto;border-color:var(--accent);color:var(--accent)"></button>
   <button id="openSet" style="margin-left:6px">설정</button>
+  <button id="openHelp" class="helpbtn" title="사용법" aria-label="사용법">?</button>
 </header>
 
 <main id="mat">
@@ -317,6 +327,44 @@
   <div class="detail" id="recDetail"></div>
 </main>
 
+<dialog id="dlgHelp" class="help">
+  <div class="hh"><b style="font-weight:normal">사용법</b><button type="button" class="cancel">닫기</button></div>
+  <div class="hb">
+    <p style="color:var(--dim)">생기부를 바탕으로 한 면접 준비를 한곳에서 정리하는 프로그램입니다. 모든 내용은 이 컴퓨터의 <b>data.db</b>와 <b>uploads</b> 폴더에 저장되고, 인터넷으로 전송되지 않습니다. (OCR·변환 기능은 설정에 API 키를 넣었을 때만 외부 서비스를 씁니다.)</p>
+    <h3>자료</h3>
+    <ul>
+      <li><b>+ 등록</b>으로 교과서·프린트·논문 등을 올립니다. 텍스트를 직접 붙여 넣거나 파일(PDF·이미지 등)을 올릴 수 있고, 학년과 과목을 지정합니다.</li>
+      <li>텍스트나 PDF에서 <b>글자를 드래그</b>하고 <b>선택 영역에 노트 추가</b>를 누르면 그 부분에 노트가 달립니다. 노트를 누르면 해당 위치로 이동합니다.</li>
+      <li>PDF는 <kbd>Ctrl</kbd>+휠 또는 <kbd>Ctrl</kbd>+<kbd>+</kbd>/<kbd>−</kbd>로 확대·축소하고, 페이지 번호로 이동할 수 있습니다.</li>
+      <li>오른쪽 패널: <b>노트</b> / <b>개별 질문</b>(그 자료에만 붙는 예상 질문과 답변) / <b>공통 질문</b>(모든 자료에 붙는 질문) / <b>생기부</b>(같은 과목의 생기부).</li>
+      <li><b>형식 변환</b>으로 텍스트 ↔ 파일 형태를 바꿀 수 있습니다. 노트는 최대한 유지됩니다.</li>
+    </ul>
+    <h3>지원 대학</h3>
+    <ul>
+      <li>지원하는 대학·학과를 등록하고, 학교/학과 특성·장점·메모를 칸에 바로 적습니다. 면접일을 넣으면 D-day가 표시됩니다.</li>
+      <li>아래의 <b>공통 질문</b>에 대학별 답변을 적어 두면 대학마다 답을 비교하며 준비할 수 있습니다. 입력칸을 벗어나면 자동 저장됩니다.</li>
+    </ul>
+    <h3>생기부</h3>
+    <ul>
+      <li>학년·과목별로 생기부 내용을 붙여 넣어 보관합니다. 텍스트를 드래그해 <b>노트</b>를 달 수 있습니다.</li>
+      <li>같은 학년·과목의 자료가 있으면 “관련 자료”로 연결되고, <b>+ 자료 추가</b>로 그 과목 자료를 바로 올릴 수 있습니다.</li>
+      <li>목록 위의 <b>PDF</b> 버튼으로 전체 생기부를 PDF 한 파일로 저장합니다.</li>
+    </ul>
+    <h3>면접 노트</h3>
+    <ul><li>면접 팁이나 자유 메모를 <b>마크다운</b>으로 씁니다. 편집/미리보기를 전환하고, 내용은 자동 저장됩니다.</li></ul>
+    <h3>체크리스트</h3>
+    <ul>
+      <li>자료나 생기부에 등록된 과목(학년별)이 자동으로 모이고, 목록에 없는 과목은 직접 추가할 수 있습니다.</li>
+      <li>체크박스를 누를 때마다 <b>미체크 → 부분 숙지 → 완료 → 제외</b> 순으로 바뀝니다. 제외한 과목은 진행률 계산에서 빠집니다.</li>
+      <li>과목 오른쪽의 “자료 n”, “생기부”를 누르면 해당 과목으로 바로 이동합니다.</li>
+    </ul>
+    <h3>설정과 업데이트</h3>
+    <ul>
+      <li><b>설정</b>에서 OCR용 API 키 등을 입력하고 버전 확인·업데이트를 할 수 있습니다. 새 버전이 있으면 상단에 알림이 뜨며, 업데이트해도 내 자료는 그대로 유지됩니다.</li>
+      <li>자료를 다른 컴퓨터로 옮기려면 프로그램 폴더의 <b>data.db</b>와 <b>uploads</b> 폴더를 함께 복사하세요.</li>
+    </ul>
+  </div>
+</dialog>
 <dialog id="dlgSet">
   <form method="dialog" id="fSet">
     <div class="meta">스캔된 PDF(글자가 없는 페이지)만 OpenRouter 비전 모델로 OCR합니다. 글자가 있는 PDF는 항상 무료로 로컬에서 추출합니다.</div>
@@ -581,6 +629,7 @@ async function loadSettings() {
   $("#keyState").textContent = st.has_key ? "API 키가 저장되어 있습니다." : "API 키가 없습니다. 스캔 PDF는 OCR할 수 없습니다.";
   return st;
 }
+$("#openHelp").onclick = () => $("#dlgHelp").showModal();
 $("#openSet").onclick = async () => { $("#fSet").elements.api_key.value = ""; await loadSettings(); $("#dlgSet").showModal(); loadUsage(); };
 $("#refUsage").onclick = loadUsage;
 let modelRows = null;
