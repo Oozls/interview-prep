@@ -205,6 +205,15 @@
   input[type=file]::file-selector-button { font: inherit; font-size: 12px; color: var(--fg); background: var(--panel); border: 1px solid var(--line);
     border-radius: 4px; padding: 4px 12px; margin-right: 10px; cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
   input[type=file]:hover::file-selector-button { border-color: var(--accent); color: var(--accent); background: rgba(79,193,255,.08); }
+  /* long text: keep one line (ellipsis) in lists/titles, cap height of cards and fields */
+  .rec-item .t b { font-weight: normal; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab { white-space: nowrap; }
+  .dhead .title:not(input) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ci .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note .q { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .note .b { max-height: 11em; overflow: auto; }
+  .qb .qt, .mq .qt { max-height: 8em; overflow: auto; }
+  .ans textarea, .mq textarea, .doc .uf textarea, .oq .bd textarea { field-sizing: content; min-height: 4.5em; max-height: 16em; }
   .ci { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
   .ci:hover { background: var(--panel); }
   .ci input { width: auto; margin: 0; flex: none; }
@@ -1123,7 +1132,7 @@ async function loadUnis() {
 function renderUniList() {
   $("#uniList").innerHTML = unis.map(u => `
     <div class="rec-item ${u.id === selUni ? "on" : ""}" data-u="${u.id}">
-      <div class="t">${esc(u.name)} ${esc(u.department)}<span>${esc(u.status)}</span></div>
+      <div class="t"><b>${esc(u.name)} ${esc(u.department)}</b><span>${esc(u.status)}</span></div>
       <div class="pv">${u.interview_date ? `면접 ${esc(u.interview_date)} · ${dday(u.interview_date)}` : "면접일 미정"}</div>
     </div>`).join("") || '<div class="meta" style="padding:16px">등록된 대학이 없습니다.</div>';
   $("#uniList").querySelectorAll("[data-u]").forEach(el => el.onclick = () => { selUni = +el.dataset.u; renderUniList(); renderUniDetail(); });
@@ -1235,7 +1244,7 @@ function renderRecList() {
   $("#recList").innerHTML = [1, 2, 3, 0].filter(g => byGrade[g]).map(g =>
     `<div class="rec-gh">${gradeLabel(g)} · ${byGrade[g].length}</div>` + byGrade[g].map(r => `
     <div class="rec-item ${r.id === selRec ? "on" : ""}" data-r="${r.id}">
-      <div class="t">${esc(r.subject)}<span>${r.content.length.toLocaleString()}자</span></div>
+      <div class="t"><b>${esc(r.subject)}</b><span>${r.content.length.toLocaleString()}자</span></div>
       <div class="pv">${esc(r.content.replace(/\s+/g, " ").slice(0, 60)) || "(내용 없음)"}</div>
     </div>`).join("")).join("") || '<div class="meta" style="padding:16px">등록된 생기부가 없습니다.</div>';
   $("#recList").querySelectorAll("[data-r]").forEach(el => el.onclick = () => { selRec = +el.dataset.r; renderRecList(); renderRecDetail(); });
@@ -1451,7 +1460,7 @@ async function loadTips() {
 function renderTipList() {
   $("#tipList").innerHTML = tips.map(t => `
     <div class="rec-item ${t.id === selTip ? "on" : ""}" data-t="${t.id}">
-      <div class="t">${esc(t.title) || "(제목 없음)"}<span>${esc(t.updated_at.slice(0, 10))}</span></div>
+      <div class="t"><b>${esc(t.title) || "(제목 없음)"}</b><span>${esc(t.updated_at.slice(0, 10))}</span></div>
       <div class="pv">${esc(t.content.replace(/\s+/g, " ").slice(0, 60)) || "(내용 없음)"}</div>
     </div>`).join("") || '<div class="meta" style="padding:16px">노트가 없습니다.</div>';
   $("#tipList").querySelectorAll("[data-t]").forEach(el => el.onclick = async () => {
