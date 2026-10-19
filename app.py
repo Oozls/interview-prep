@@ -115,6 +115,21 @@ CREATE TABLE IF NOT EXISTS tips (
   content TEXT NOT NULL DEFAULT '',
   updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS record_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  record_id INTEGER NOT NULL REFERENCES records(id) ON DELETE CASCADE,
+  start INTEGER, end INTEGER,
+  quote TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS material_own_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  material_id INTEGER NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS answers (
   question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
   university_id INTEGER NOT NULL REFERENCES universities(id) ON DELETE CASCADE,
@@ -164,7 +179,7 @@ def extract_text(path: Path, mime: str) -> str:
     return ""
 
 
-def remap_notes(conn, mid, old, new):
+def remap_notes(conn, mid, old, new, table="notes", col="material_id"):
     """Keep notes attached to the right text after the body was edited."""
     old_n = old.replace("\r\n", "\n")
     new = new.replace("\r\n", "\n")
@@ -177,7 +192,7 @@ def remap_notes(conn, mid, old, new):
         sfx += 1
     old_end = len(old_n) - sfx
     delta = len(new) - len(old_n)
-    for n in conn.execute("SELECT * FROM notes WHERE material_id=? AND start IS NOT NULL", (mid,)).fetchall():
+    for n in conn.execute(f"SELECT * FROM {table} WHERE {col}=? AND start IS NOT NULL", (mid,)).fetchall():
         # offsets were measured on the raw text (may contain \r\n): convert to normalized offsets
         a = n["start"] - old[:n["start"]].count("\r\n")
         b = n["end"] - old[:n["end"]].count("\r\n")
@@ -192,9 +207,9 @@ def remap_notes(conn, mid, old, new):
                 a = min(hits, key=lambda x: abs(x - a))
                 b = a + len(quote)
             else:
-                conn.execute("UPDATE notes SET start=NULL, end=NULL, quote=? WHERE id=?", (quote, n["id"]))
+                conn.execute(f"UPDATE {table} SET start=NULL, end=NULL, quote=? WHERE id=?", (quote, n["id"]))
                 continue
-        conn.execute("UPDATE notes SET start=?, end=?, quote=? WHERE id=?", (a, b, quote, n["id"]))
+        conn.execute(f"UPDATE {table} SET start=?, end=?, quote=? WHERE id=?", (a, b, quote, n["id"]))
 
 
 def subj_key(subject: str) -> str:
@@ -779,6 +794,7 @@ def list_records():
         hay = (r["subject"] + "\n" + r["content"]).lower()
         if all(t in hay for t in terms):
             d = dict(r)
+            d["notes"] = [dict(n) for n in db().execute("SELECT * FROM record_notes WHERE record_id=? ORDER BY COALESCE(start,0), id", (r["id"],))]
             d["materials"] = [{"id": m["id"], "title": m["title"]} for m in db().execute(
                 "SELECT id, title, subject FROM materials WHERE grade=? ORDER BY id", (r["grade"],))
                 if subj_key(m["subject"]) == subj_key(r["subject"])]
@@ -872,6 +888,9 @@ def save_record():
     if dup and dup["id"] != rid:
         return jsonify(error=f"{grade}학년 '{subject}' 기록이 이미 있습니다. 해당 항목을 수정하세요."), 400
     if rid:
+        old = conn.execute("SELECT content FROM records WHERE id=?", (rid,)).fetchone()
+        if old and old["content"] != content:
+            remap_notes(conn, rid, old["content"], content, "record_notes", "record_id")
         conn.execute("UPDATE records SET grade=?, subject=?, content=?, updated_at=? WHERE id=?",
                      (grade, subject, content, now(), rid))
     else:
@@ -880,6 +899,41 @@ def save_record():
         rid = cur.lastrowid
     conn.commit()
     return jsonify(id=rid)
+
+
+@app.post("/api/records/<int:rid>/notes")
+def create_record_note(rid):
+    rec = db().execute("SELECT content FROM records WHERE id=?", (rid,)).fetchone()
+    if not rec:
+        return jsonify(error="생기부를 찾을 수 없습니다."), 404
+    j = request.get_json() or {}
+    body = j.get("body", "").strip()
+    if not body:
+        return jsonify(error="노트 내용이 비었습니다."), 400
+    start, end = int(j["start"]), int(j["end"])
+    if not 0 <= start < end <= len(rec["content"]):
+        return jsonify(error="선택 범위가 올바르지 않습니다."), 400
+    conn = db()
+    cur = conn.execute("INSERT INTO record_notes(record_id,start,end,quote,body,created_at) VALUES(?,?,?,?,?,?)",
+                       (rid, start, end, rec["content"][start:end], body, now()))
+    conn.commit()
+    return jsonify(id=cur.lastrowid)
+
+
+@app.put("/api/record-notes/<int:nid>")
+def update_record_note(nid):
+    conn = db()
+    conn.execute("UPDATE record_notes SET body=? WHERE id=?", ((request.get_json() or {}).get("body", ""), nid))
+    conn.commit()
+    return jsonify(ok=True)
+
+
+@app.delete("/api/record-notes/<int:nid>")
+def delete_record_note(nid):
+    conn = db()
+    conn.execute("DELETE FROM record_notes WHERE id=?", (nid,))
+    conn.commit()
+    return jsonify(ok=True)
 
 
 @app.delete("/api/records/<int:rid>")
@@ -956,6 +1010,51 @@ def save_material_answer(qid, mid):
                      "ON CONFLICT(question_id,material_id) DO UPDATE SET body=excluded.body", (qid, mid, body))
     else:
         conn.execute("DELETE FROM material_answers WHERE question_id=? AND material_id=?", (qid, mid))
+    conn.commit()
+    return jsonify(ok=True)
+
+
+# ---------- questions written for one material only ----------
+@app.get("/api/materials/<int:mid>/own-questions")
+def list_own_questions(mid):
+    material_or_404(mid)
+    rows = db().execute("SELECT id, text, answer FROM material_own_questions WHERE material_id=? ORDER BY id", (mid,))
+    return jsonify([dict(r) for r in rows])
+
+
+@app.post("/api/materials/<int:mid>/own-questions")
+def create_own_question(mid):
+    material_or_404(mid)
+    j = request.get_json() or {}
+    text = j.get("text", "").strip()
+    if not text:
+        return jsonify(error="질문을 입력하세요."), 400
+    conn = db()
+    cur = conn.execute("INSERT INTO material_own_questions(material_id,text,answer,updated_at) VALUES(?,?,?,?)",
+                       (mid, text, j.get("answer", ""), now()))
+    conn.commit()
+    return jsonify(id=cur.lastrowid)
+
+
+@app.put("/api/own-questions/<int:qid>")
+def update_own_question(qid):
+    j = request.get_json() or {}
+    conn = db()
+    if "text" in j:
+        text = j["text"].strip()
+        if not text:
+            return jsonify(error="질문을 입력하세요."), 400
+        conn.execute("UPDATE material_own_questions SET text=?, updated_at=? WHERE id=?", (text, now(), qid))
+    if "answer" in j:
+        conn.execute("UPDATE material_own_questions SET answer=?, updated_at=? WHERE id=?", (j["answer"], now(), qid))
+    conn.commit()
+    return jsonify(ok=True)
+
+
+@app.delete("/api/own-questions/<int:qid>")
+def delete_own_question(qid):
+    conn = db()
+    conn.execute("DELETE FROM material_own_questions WHERE id=?", (qid,))
     conn.commit()
     return jsonify(ok=True)
 
