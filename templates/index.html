@@ -1560,7 +1560,10 @@ function renderChk() {
     el.querySelectorAll(".src a").forEach(a => a.onclick = e => {      // jump to the related material list / school record
       e.preventDefault(); e.stopPropagation();
       if (a.dataset.m) { $("#fGrade").value = g; $("#fSubject").value = s; document.querySelector('[data-tab="mat"]').click(); closeMat?.(); loadList(); }
-      else { document.querySelector('[data-tab="rec"]').click(); }
+      else {                                                  // open exactly this subject's school record
+        selRec = it.record; $("#rq").value = ""; $("#rGrade").value = "";
+        document.querySelector('[data-tab="rec"]').click();
+      }
     });
   });
 }

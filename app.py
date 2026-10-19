@@ -1189,12 +1189,12 @@ def checklist_list():
     items = {}
 
     def item(g, sub):
-        return items.setdefault((g, sub), {"grade": g, "subject": sub, "materials": 0, "record": False, "done": 0, "custom": False})
+        return items.setdefault((g, sub), {"grade": g, "subject": sub, "materials": 0, "record": 0, "done": 0, "custom": False})
 
     for r in conn.execute("SELECT grade, subject, COUNT(*) n FROM materials WHERE subject!='' GROUP BY grade, subject"):
         item(r["grade"], r["subject"])["materials"] = r["n"]
-    for r in conn.execute("SELECT grade, subject FROM records WHERE subject!=''"):
-        item(r["grade"], r["subject"])["record"] = True
+    for r in conn.execute("SELECT id, grade, subject FROM records WHERE subject!=''"):
+        item(r["grade"], r["subject"])["record"] = r["id"]      # record id (0 = none)
     for r in conn.execute("SELECT grade, subject, done FROM checklist"):
         it = item(r["grade"], r["subject"])
         it["done"] = r["done"]
