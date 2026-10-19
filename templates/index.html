@@ -762,7 +762,7 @@ function renderDetail() {
       : `<div class="empty">이 형식은 미리보기를 지원하지 않습니다.</div>`;
     viewer = `<div class="bar">페이지 <input id="pageNo" type="number" min="1" value="1" style="width:70px">
       <button id="goPage">이동</button>${isPdf ? '<span class="meta" id="pageTotal"></span><button id="zOut" title="축소 (Ctrl + 휠 / Ctrl −)">−</button><button id="zPct" title="클릭: 100%로" style="min-width:48px">100%</button><button id="zIn" title="확대 (Ctrl + 휠 / Ctrl +)">＋</button><button id="zFit" title="너비에 맞춤">맞춤</button><button id="addPdfNote">선택 영역에 노트 추가</button>' : ""}<button id="addPageNote">이 페이지에 노트 추가</button>
-      <a href="/files/${m.id}?dl=1">${esc(m.filename)} 다운로드</a></div>${view}`;
+      <a href="/files/${m.id}?dl=1" id="dlFile">${esc(m.filename)} 다운로드</a></div>${view}`;
   }
   $("#matDetail").innerHTML = `
     <div class="dhead mh"><button id="back">← 목록</button>
@@ -791,6 +791,12 @@ function renderDetail() {
   });
   if (panelTab !== "notes") document.querySelector(`.pt[data-p="${panelTab}"]`).click();
 
+  const dl = $("#dlFile");
+  if (dl && window.pywebview?.api) dl.onclick = async e => {       // the embedded window cannot save downloads itself
+    e.preventDefault();
+    const r = await pywebview.api.save_material_file(m.id);
+    if (r.error) notify(r.error); else if (r.path) notify("저장했습니다: " + r.path);
+  };
   $("#back").onclick = closeMat;
   $("#convMat").onclick = openConv;
   if (m.kind === "text") $("#editBody").onclick = startEditBody;

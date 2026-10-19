@@ -43,6 +43,24 @@ class Api:
             f.write(data)
         return {"path": path}
 
+    def save_material_file(self, mid):
+        import shutil
+        import sqlite3
+        conn = sqlite3.connect(appmod.DB_PATH); conn.row_factory = sqlite3.Row
+        try:
+            m = conn.execute("SELECT * FROM materials WHERE id=? AND kind='file'", (int(mid),)).fetchone()
+        finally:
+            conn.close()
+        src = appmod.UPLOADS / m["stored"] if m else None
+        if not src or not src.exists():
+            return {"error": "파일을 찾을 수 없습니다."}
+        path = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=m["filename"])
+        if not path:
+            return {"cancelled": True}
+        path = path if isinstance(path, str) else path[0]
+        shutil.copyfile(src, path)
+        return {"path": path}
+
 
 def free_port():
     with socket.socket() as s:
