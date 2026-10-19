@@ -219,6 +219,9 @@
   .ci { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
   .ci:hover { background: var(--panel); }
   .ci input { width: auto; margin: 0; flex: none; }
+  .ci.skip { opacity: .5; } .ci.skip .n { color: var(--dim); font-style: italic; }
+  .ci.skip input { border-style: dashed; border-color: #5a5a5a; }
+  .ci.skip input::after { content: ""; position: absolute; left: 2px; top: 6px; width: 9px; height: 1.5px; background: #8b8b8b; transform: rotate(-45deg); }
   .ci .n { flex: 1; font-size: 13px; } .ci.done .n { color: var(--dim); text-decoration: line-through; } .ci.part .n { color: var(--fg); }
   .ci .src { color: var(--dim); font-size: 11px; white-space: nowrap; }
   .ci .src a { color: var(--dim); text-decoration: underline; }
@@ -279,7 +282,7 @@
     <div class="chkhead">
       <div class="chkprog"><div class="bar"><i id="chkBar"></i><i id="chkBarP" class="p"></i></div><span id="chkSum" class="meta"></span></div>
       <div class="chktools">
-        <select id="chkFilter"><option value="">전체</option><option value="todo">미숙지만</option><option value="part">부분 숙지만</option><option value="done">숙지 완료만</option></select>
+        <select id="chkFilter"><option value="">전체</option><option value="todo">미숙지만</option><option value="part">부분 숙지만</option><option value="done">숙지 완료만</option><option value="skip">제외만</option></select>
         <select id="chkGrade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="0">기타</option></select>
         <input id="chkSubj" placeholder="목록에 없는 과목 직접 추가" list="chkSubjList"><datalist id="chkSubjList"></datalist>
         <button id="chkAdd">추가</button>
@@ -1524,19 +1527,20 @@ async function loadChk() {
   renderChk();
 }
 function renderChk() {
-  const f = $("#chkFilter").value, total = chk.length, done = chk.filter(i => i.done === 1).length, part = chk.filter(i => i.done === 2).length;
+  const f = $("#chkFilter").value, act = chk.filter(i => i.done !== 3), total = act.length, skip = chk.length - total;
+  const done = act.filter(i => i.done === 1).length, part = act.filter(i => i.done === 2).length;
   $("#chkBar").style.width = total ? done / total * 100 + "%" : "0";
   $("#chkBarP").style.width = total ? part / total * 100 + "%" : "0";
-  $("#chkSum").textContent = total ? `${done} / ${total} 숙지` + (part ? ` · 부분 ${part}` : "") : "";
-  const want = { todo: 0, part: 2, done: 1 };
+  $("#chkSum").textContent = total ? `${done} / ${total} 숙지` + (part ? ` · 부분 ${part}` : "") + (skip ? ` · 제외 ${skip}` : "") : (skip ? `제외 ${skip}` : "");
+  const want = { todo: 0, part: 2, done: 1, skip: 3 };
   const shown = chk.filter(i => !f || i.done === want[f]);
   let html = "";
   for (const g of [1, 2, 3, 0]) {
     const all = chk.filter(i => i.grade === g), rows = shown.filter(i => i.grade === g);
     if (!rows.length) continue;
-    html += `<div class="gh"><b style="font-weight:normal">${gradeLabel(g)}</b><span>${all.filter(i => i.done === 1).length} / ${all.length}${all.some(i => i.done === 2) ? ` · 부분 ${all.filter(i => i.done === 2).length}` : ""}</span></div>`;
-    html += rows.map(i => `<label class="ci ${i.done === 1 ? "done" : i.done === 2 ? "part" : ""}" data-g="${i.grade}" data-s="${esc(i.subject)}">
-      <input type="checkbox" ${i.done === 1 ? "checked" : ""} title="클릭: 미숙지 → 부분 → 완료"><span class="n">${esc(i.subject)}</span>
+    html += `<div class="gh"><b style="font-weight:normal">${gradeLabel(g)}</b><span>${all.filter(i => i.done === 1).length} / ${all.filter(i => i.done !== 3).length}${all.some(i => i.done === 2) ? ` · 부분 ${all.filter(i => i.done === 2).length}` : ""}</span></div>`;
+    html += rows.map(i => `<label class="ci ${i.done === 1 ? "done" : i.done === 2 ? "part" : i.done === 3 ? "skip" : ""}" data-g="${i.grade}" data-s="${esc(i.subject)}">
+      <input type="checkbox" ${i.done === 1 ? "checked" : ""} title="클릭: 미숙지 → 부분 → 완료 → 제외"><span class="n">${esc(i.subject)}</span>
       <span class="src">${i.custom ? "직접 추가" : [i.materials ? `<a href="#" data-m="1">자료 ${i.materials}</a>` : "", i.record ? `<a href="#" data-r="1">생기부</a>` : ""].filter(Boolean).join(" · ")}</span>
       ${i.custom ? '<button class="x danger" title="목록에서 삭제" type="button">×</button>' : ""}</label>`).join("");
   }
@@ -1547,7 +1551,7 @@ function renderChk() {
     cb.indeterminate = it.done === 2;
     cb.onclick = async e => {                                   // cycle: not yet -> partly -> fully
       e.preventDefault();
-      const next = it.done === 0 ? 2 : it.done === 2 ? 1 : 0;
+      const next = [2, 3, 1, 0][it.done];   // none -> partly -> fully -> excluded -> none
       await api("/api/checklist", "PUT", { grade: g, subject: s, done: next });
       it.done = next; renderChk();
     };

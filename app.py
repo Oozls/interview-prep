@@ -1208,8 +1208,8 @@ def checklist_set():
     k = _chk_key(request.get_json() or {})
     if not k:
         return jsonify(error="학년과 과목을 확인하세요."), 400
-    d = (request.get_json() or {}).get("done")        # 0 = not yet, 1 = fully mastered, 2 = partly (true/false still accepted)
-    done = d if d in (0, 1, 2) and not isinstance(d, bool) else (1 if d else 0)
+    d = (request.get_json() or {}).get("done")        # 0 = not yet, 1 = fully mastered, 2 = partly, 3 = excluded (not counted) (true/false still accepted)
+    done = d if d in (0, 1, 2, 3) and not isinstance(d, bool) else (1 if d else 0)
     conn = db()
     conn.execute("INSERT INTO checklist(grade,subject,done,updated_at) VALUES(?,?,?,?) "
                  "ON CONFLICT(grade,subject) DO UPDATE SET done=excluded.done, updated_at=excluded.updated_at",
