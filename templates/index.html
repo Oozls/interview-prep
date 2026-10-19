@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>생기부 면접 대비</title>
 <style>
-  @font-face { font-family: "AppleSDGothicNeoL00"; src: local("AppleSDGothicNeoL00"), local("Apple SD Gothic Neo L"), local("AppleSDGothicNeoL"); }
+  /* bundled web font (Pretendard, SIL OFL) so the look does not depend on what is installed; Light is used as the normal weight */
+  @font-face { font-family: "Pretendard"; font-weight: 400; font-display: swap; src: url("/static/fonts/Pretendard-Light.woff2") format("woff2"); }
+  @font-face { font-family: "Pretendard"; font-weight: 700; font-display: swap; src: url("/static/fonts/Pretendard-SemiBold.woff2") format("woff2"); }
   :root {
     --bg: #1e1e1e; --panel: #252526; --line: #3c3c3c; --fg: #d4d4d4; --dim: #8b8b8b;
     --accent: #4fc1ff; --hl: #5a4a12; --hl2: #7a6416; --danger: #f14c4c;
@@ -13,7 +15,7 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; overflow: hidden; }   /* the app scrolls inside its panes, never the page */
-  body { background: var(--bg); color: var(--fg); font: 14px/1.6 "AppleSDGothicNeoL00", "Apple SD Gothic Neo L", "Malgun Gothic", sans-serif; display: flex; flex-direction: column; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.6 "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; display: flex; flex-direction: column; }
   button, input, select, textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; padding: 4px 8px; }
   button { cursor: pointer; background: var(--panel); }
   button:hover { border-color: var(--accent); }

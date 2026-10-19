@@ -808,12 +808,10 @@ def build_records_pdf(conn):
     rows = conn.execute("SELECT * FROM records ORDER BY grade, subject").fetchall()
     if not rows:
         return None, "내보낼 생기부가 없습니다."
-    # AppleSDGothicNeoL00 (the app's UI font) is installed per-user; fall back to system fonts
-    dirs = [Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "Windows" / "Fonts",
-            Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"]
+    # the UI font (Pretendard) ships with the app; fall back to system fonts if it is missing
+    dirs = [BASE / "static" / "fonts", Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"]
     fonts = reg = bold = None
-    for d, r, b in [(dirs[0], "AppleSDGothicNeoL.ttf", "AppleSDGothicNeoB.ttf"),
-                    (dirs[1], "AppleSDGothicNeoL.ttf", "AppleSDGothicNeoB.ttf"),
+    for d, r, b in [(dirs[0], "Pretendard-Light.otf", "Pretendard-SemiBold.otf"),
                     (dirs[1], "malgun.ttf", "malgunbd.ttf"), (dirs[1], "NanumGothic.ttf", "NanumGothic.ttf")]:
         if (d / r).exists():
             fonts, reg, bold = d, r, (b if (d / b).exists() else r)
