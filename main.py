@@ -11,6 +11,22 @@ if sys.stdout is None or sys.stderr is None:
     sys.stdout = sys.stdout or log
     sys.stderr = sys.stderr or log
 
+# Files unzipped from a downloaded archive are marked "from the internet", and .NET then refuses to load
+# our DLLs (pywebview dies with "Failed to resolve Python.Runtime.Loader.Initialize"). Clear the mark first.
+if getattr(sys, "frozen", False):
+    import stat
+    from pathlib import Path
+
+    for dll in Path(sys._MEIPASS).rglob("*.dll"):
+        mark = f"{dll}:Zone.Identifier"
+        if not os.path.exists(mark):
+            continue
+        try:
+            os.chmod(dll, stat.S_IWRITE)          # a read-only file would refuse the removal
+            os.remove(mark)
+        except OSError as e:
+            print(f"unblock failed: {dll}: {e}", file=sys.stderr)
+
 import webview
 
 import app as appmod
